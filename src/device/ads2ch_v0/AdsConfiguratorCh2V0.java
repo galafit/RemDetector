@@ -22,12 +22,13 @@ public class AdsConfiguratorCh2V0 implements AdsConfigurator {
     private static final int SET_ACCELEROMETER_ENABLED_CODE = 0xF5;
     private static final int CONFIG_DATA_RECEIVED_CODE = 0xF6;
 
-    public static final int NUMBER_OF_ADS_CHANNELS = 2;
     public static final int NUMBER_OF_ACCELEROMETER_CHANNELS = 3;
-    public static final Divider MAX_DIVIDER = Divider.D50;
-    private static final String PROPERTIES_FILE_NAME = "ads2ch_v0_config.properties";
-    private static final int COM_PORT_SPEED = 230400;
-    private AdsConfiguration adsConfiguration = new AdsConfiguration(PROPERTIES_FILE_NAME, NUMBER_OF_ADS_CHANNELS, COM_PORT_SPEED, MAX_DIVIDER);
+
+    private AdsConfiguration adsConfiguration;
+
+    public AdsConfiguratorCh2V0(AdsConfiguration adsConfiguration) {
+        this.adsConfiguration = adsConfiguration;
+    }
 
     @Override
     public FrameDecoder getFrameDecoder() {
@@ -50,11 +51,12 @@ public class AdsConfiguratorCh2V0 implements AdsConfigurator {
         List<Byte> result = new ArrayList<Byte>();
         result.addAll(startPinLo());
         result.addAll(writeCommand(0x11));  //stop continious
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        int numberOfAdsChannels = adsConfiguration.getNumberOfAdsChannels();
+        for (int i = 0; i < numberOfAdsChannels; i++) {
             int divider = adsConfiguration.isChannelEnabled(i) ? adsConfiguration.getChannelDivider(i).getValue() : 0;
             result.addAll(writeDividerForChannel(i, divider));
         }
-        for (int i = NUMBER_OF_ADS_CHANNELS; i < NUMBER_OF_ACCELEROMETER_CHANNELS + NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = adsConfiguration.getNumberOfAdsChannels(); i < NUMBER_OF_ACCELEROMETER_CHANNELS + adsConfiguration.getNumberOfAdsChannels(); i++) {
             int divider = adsConfiguration.isAccelerometerEnabled() ? adsConfiguration.getAccelerometerDivider().getValue() : 0;
             result.addAll(writeDividerForChannel(i,divider ));
         }

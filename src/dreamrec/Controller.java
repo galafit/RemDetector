@@ -13,39 +13,24 @@ import java.util.List;
 /**
  * Created by mac on 17/02/15.
  */
-public class Controller  implements InputEventHandler {
+public class  Controller  implements InputEventHandler {
     private static final Log log = LogFactory.getLog(Controller.class);
 
     private List<ControllerListener> listenerList = new ArrayList<ControllerListener>();
 
     private static final String[] FILE_EXTENSIONS = {"bdf", "edf"};
-    private DeviceFabric deviceFabric;
-    private String[] deviceSignalsLabels;
+    private ServiceLocator serviceLocator;
     private BdfProvider bdfProvider;
     private RecordingBdfConfig recordingBdfConfig;
-    private boolean isFrequencyAutoAdjustment;
     private BdfWriter bdfWriter;
-    private RemConfigurator remConfigurator;
     private boolean isRemMode;
 
-    public Controller(DeviceFabric deviceFabric) {
-        this.deviceFabric = deviceFabric;
-    }
-
-    public void setDeviceSignalsLabels(String[] deviceSignalsLabels) {
-        this.deviceSignalsLabels = deviceSignalsLabels;
+    public Controller(ServiceLocator serviceLocator) {
+        this.serviceLocator = serviceLocator;
     }
 
     public void setRemMode(boolean isRemMode) {
         this.isRemMode = isRemMode;
-    }
-
-    public void setRemConfigurator(RemConfigurator remConfigurator) {
-        this.remConfigurator = remConfigurator;
-    }
-
-    public void setFrequencyAutoAdjustment(boolean isFrequencyAutoAdjustment) {
-        this.isFrequencyAutoAdjustment = isFrequencyAutoAdjustment;
     }
 
     public void addListener(ControllerListener listener) {
@@ -64,15 +49,9 @@ public class Controller  implements InputEventHandler {
     }
 
     @Override
-    public void startRecording(RecordingSettings recordingSettings, File file) throws ApplicationException {
+    public void readFromFile(RecordingSettings recordingSettings, File file) throws ApplicationException {
         stopRecording();
-
-        if(file == null) { // device
-            BdfProvider bdfDevice = deviceFabric.getDeviceImplementation();
-            bdfProvider = bdfDevice;
-            recordingBdfConfig = new RecordingBdfConfig(bdfDevice.getBdfConfig());
-        }
-        else if (file.isFile()) { // file
+        if (file.isFile()) { // file
             BdfReader bdfReader = new BdfReader(file);
             bdfProvider = bdfReader;
             recordingBdfConfig = bdfReader.getBdfConfig();
@@ -80,27 +59,15 @@ public class Controller  implements InputEventHandler {
         else {
             throw new ApplicationException("File: " + file + " is not valid");
         }
-
-        String dirToSave = recordingSettings.getDirectoryToSave();
-        if(dirToSave == null || ! new File(dirToSave).isDirectory()) {
-            dirToSave = System.getProperty("user.dir"); // current working directory ("./");
-        }
-
-        String filenameToSave = recordingSettings.getFilename();
-        filenameToSave = normalizeFilename(filenameToSave);
-        File fileToSave = new File(dirToSave, filenameToSave);
-        if( ! fileToSave.equals(file)) { // fileToSave does not equal to fileToRead
-            bdfWriter = new BdfWriter(recordingBdfConfig, fileToSave);
-            bdfWriter.setFrequencyAutoAdjustment(isFrequencyAutoAdjustment);
-            bdfProvider.addBdfDataListener(bdfWriter);
-        }
         recordingBdfConfig.setPatientIdentification(recordingSettings.getPatientIdentification());
         recordingBdfConfig.setRecordingIdentification(recordingSettings.getRecordingIdentification());
         recordingBdfConfig.setSignalsLabels(recordingSettings.getChannelsLabels());
+        BdfHeaderWriter.writeBdfHeader(recordingBdfConfig, file);
+
         if (isRemMode) {
             RemChannels remChannels = new RemChannels(recordingBdfConfig.getSignalsLabels());
             RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
-            dataStore.configure(remConfigurator);
+            dataStore.configure(serviceLocator.getRemConfigurator());
             dataStore.setChannelsMask(recordingSettings.getActiveChannels());
             dataStore.setStartTime(recordingBdfConfig.getStartTime());
             fireDataStoreUpdated(dataStore);
@@ -118,6 +85,39 @@ public class Controller  implements InputEventHandler {
     }
 
     @Override
+    public void startRecording(RecordingSettings recordingSettings, File file) throws ApplicationException {
+        stopRecording();
+        BdfProvider bdfDevice = serviceLocator.getDevice();
+        bdfProvider = bdfDevice;
+        recordingBdfConfig = new RecordingBdfConfig(bdfDevice.getBdfConfig());
+
+        if (file != null && file.isFile()) { // file
+            recordingBdfConfig.setPatientIdentification(recordingSettings.getPatientIdentification());
+            recordingBdfConfig.setRecordingIdentification(recordingSettings.getRecordingIdentification());
+            recordingBdfConfig.setSignalsLabels(recordingSettings.getChannelsLabels());
+            bdfWriter = new BdfWriter(recordingBdfConfig, file);
+            bdfWriter.setFrequencyAutoAdjustment(false);
+            bdfProvider.addBdfDataListener(bdfWriter);
+        }
+        if (isRemMode) {
+            RemChannels remChannels = new RemChannels(recordingBdfConfig.getSignalsLabels());
+            RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
+            dataStore.configure(serviceLocator.getRemConfigurator());
+            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
+            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+            fireDataStoreUpdated(dataStore);
+
+        } else {
+            DataStore dataStore = new DataStore(bdfProvider);
+            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
+            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+
+            fireDataStoreUpdated(dataStore);
+        }
+        bdfProvider.startReading();
+    }
+
+    @Override
     public void stopRecording() throws ApplicationException {
         if(bdfProvider != null) {
             bdfProvider.stopReading();
@@ -129,9 +129,9 @@ public class Controller  implements InputEventHandler {
     public RecordingSettings getRecordingSettings(File file) throws ApplicationException {
         RecordingSettings recordingSettings;
         if(file == null) { // device
-            BdfConfig deviceBdfConfig = deviceFabric.getDeviceImplementation().getBdfConfig();
+            BdfConfig deviceBdfConfig = serviceLocator.getDevice().getBdfConfig();
             RecordingBdfConfig recordingBdfConfig = new RecordingBdfConfig(deviceBdfConfig);
-            recordingBdfConfig.setSignalsLabels(deviceSignalsLabels);
+            //recordingBdfConfig.setSignalsLabels(deviceSignalsLabels);
             recordingSettings = new RecordingSettings(recordingBdfConfig);
         }
         else if (file.isFile()) { // file

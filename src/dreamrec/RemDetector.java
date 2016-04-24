@@ -1,9 +1,7 @@
 package dreamrec;
 
-import gui.GuiConfig;
 import gui.MainWindow;
 import properties.ApplicationProperties;
-import properties.GuiProperties;
 
 import javax.swing.*;
 
@@ -25,22 +23,10 @@ public class RemDetector {
 
         try {
             ApplicationProperties applicationProperties = new ApplicationProperties("application.properties");
-            GuiConfig guiConfig = new GuiProperties("gui.properties");
-            String deviceClass = applicationProperties.getDeviceClassName();
-            DeviceFabric deviceFabric = new DeviceFabric(deviceClass);
-            String[] deviceSignalsLabels = applicationProperties.getDeviceChannelsLabels();
-            boolean isFrequencyAutoAdjustment = applicationProperties.isFrequencyAutoAdjustment();
-            RemConfigurator remConfigurator = new RemConfigurator(applicationProperties.getEogRemFrequency(),
-                    applicationProperties.getAccelerometerRemFrequency());
-
-            Controller controller = new Controller(deviceFabric);
-            controller.setDeviceSignalsLabels(deviceSignalsLabels);
-            controller.setRemConfigurator(remConfigurator);
-            controller.setFrequencyAutoAdjustment(isFrequencyAutoAdjustment);
+            ServiceLocator serviceLocator = new PropertiesServiceLocator(applicationProperties);
+            Controller controller = new Controller(serviceLocator);
             controller.setRemMode(true);
-
-            MainWindow mainWindow = new MainWindow(controller, guiConfig);
-
+            MainWindow mainWindow = new MainWindow(controller, serviceLocator.getGuiConfig());
             Presenter presenter = new Presenter(mainWindow);
             controller.addListener(presenter);
 

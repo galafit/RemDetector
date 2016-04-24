@@ -9,9 +9,6 @@ import java.util.List;
  * Created by mac on 22/03/15.
  */
 public class AdsConfiguratorCh8V0 implements AdsConfigurator {
-
-    public static final int NUMBER_OF_ADS_CHANNELS = 8;
-    public static final int NUMBER_OF_ACCELEROMETER_CHANNELS = 3;
     private static final int BYTE_0_MARKER = 0x00;
     private static final int BYTE_1_MARKER = 0x10;
     private static final int BYTE_2_MARKER = 0x20;
@@ -24,11 +21,13 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
     private static final int SET_ACCELEROMETER_ENABLED_CODE = 0xF5;
     private static final int CONFIG_DATA_RECEIVED_CODE = 0xF6;
 
-    public static final Divider MAX_DIVIDER = Divider.D10;
-    private static final String PROPERTIES_FILE_NAME = "ads8ch_v0_config.properties";
-    private static final int COM_PORT_SPEED = 460800;
-    private AdsConfiguration adsConfiguration = new AdsConfiguration(PROPERTIES_FILE_NAME, NUMBER_OF_ADS_CHANNELS, COM_PORT_SPEED, MAX_DIVIDER);
+    public static final int NUMBER_OF_ACCELEROMETER_CHANNELS = 3;
 
+    private AdsConfiguration adsConfiguration;
+
+    public AdsConfiguratorCh8V0(AdsConfiguration adsConfiguration) {
+        this.adsConfiguration = adsConfiguration;
+    }
 
     @Override
     public FrameDecoder getFrameDecoder() {
@@ -50,12 +49,13 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
         List<Byte> result = new ArrayList<Byte>();
         result.addAll(startPinLo());
         result.addAll(writeCommand(0x11));  //stop continious
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        int numberOfAdsChannels = adsConfiguration.getNumberOfAdsChannels();
+        for (int i = 0; i < numberOfAdsChannels; i++) {
 
             int divider = adsConfiguration.isChannelEnabled(i) ? adsConfiguration.getChannelDivider(i).getValue() : 0;
             result.addAll(writeDividerForChannel(i, divider));
         }
-        for (int i = NUMBER_OF_ADS_CHANNELS; i < NUMBER_OF_ACCELEROMETER_CHANNELS + NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = numberOfAdsChannels; i < NUMBER_OF_ACCELEROMETER_CHANNELS + numberOfAdsChannels; i++) {
             int divider = adsConfiguration.isAccelerometerEnabled() ? adsConfiguration.getAccelerometerDivider().getValue() : 0;
             result.addAll(writeDividerForChannel(i, divider));
         }
@@ -183,7 +183,7 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
 
     private int testSignalEnabledBits() {
         int result = 0x00;
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = 0; i <  adsConfiguration.getNumberOfAdsChannels(); i++) {
             if (adsConfiguration.getChannelCommutatorState(i).equals(CommutatorState.TEST_SIGNAL)) {
                 result = 0x10;
             }
@@ -192,7 +192,7 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
     }
 
     private boolean isLoffEnabled() {
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = 0; i <  adsConfiguration.getNumberOfAdsChannels(); i++) {
             if (adsConfiguration.isChannelEnabled(i) && adsConfiguration.isChannelLoffEnable(i)) {
                 return true;
             }
@@ -202,7 +202,7 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
 
     private int getLoffSensRegisterValue(){
         int result = 0;
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = 0; i <  adsConfiguration.getNumberOfAdsChannels(); i++) {
             result += (adsConfiguration.isChannelEnabled(i) && adsConfiguration.isChannelLoffEnable(i)) ? Math.pow(2, i) : 0;
         }
         return result;
@@ -210,7 +210,7 @@ public class AdsConfiguratorCh8V0 implements AdsConfigurator {
 
     private int getRLDSensBits() {
         int result = 0;
-        for (int i = 0; i < NUMBER_OF_ADS_CHANNELS; i++) {
+        for (int i = 0; i <  adsConfiguration.getNumberOfAdsChannels(); i++) {
             result += adsConfiguration.isChannelRldSenseEnable(i) ? Math.pow(2, i) : 0;
         }
         return result;

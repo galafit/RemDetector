@@ -11,17 +11,16 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Ads implements BdfProvider {
+public abstract class Ads implements BdfProvider {
     private static final Log log = LogFactory.getLog(Ads.class);
     private List<BdfListener> bdfListeners = new ArrayList<BdfListener>();
     protected ComPort comPort;
     protected boolean isRecording;
-    private AdsConfigurator adsConfigurator;
+    protected AdsConfigurator adsConfigurator;
 
 
-    public Ads(AdsConfigurator adsConfigurator) {
-        this.adsConfigurator = adsConfigurator;
-    }
+    public abstract void setAdsConfigurator (AdsConfiguration adsConfiguration);
+
 
     @Override
     public void startReading() throws ApplicationException {

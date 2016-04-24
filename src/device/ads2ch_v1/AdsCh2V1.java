@@ -1,7 +1,7 @@
 package device.ads2ch_v1;
 
-import bdf.BdfListener;
 import device.general.Ads;
+import device.general.AdsConfiguration;
 import dreamrec.ApplicationException;
 
 import java.util.ArrayList;
@@ -18,8 +18,12 @@ public class AdsCh2V1  extends Ads {
     private Timer pingTimer;
 
     public AdsCh2V1() {
-        super(new AdsConfiguratorCh2V1());
         pingCommand.add((byte)0xFB);
+    }
+
+    @Override
+    public void setAdsConfigurator(AdsConfiguration adsConfiguration) {
+        adsConfigurator = new AdsConfiguratorCh2V1(adsConfiguration);
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 public class ApplicationProperties extends FileProperties {
     private static final String DEVICE_CLASSNAME = "device.classname";
+    private static final String DEVICE_CONFIG_FILENAME = "device.config_filename";
     private static final String DEVICE_CHANNEL_NAME = "device.channel.name";
     private static final String IS_FREQUENCY_AUTO_ADJUSTMENT = "is_frequency_auto_adjustment";
 
@@ -21,6 +22,10 @@ public class ApplicationProperties extends FileProperties {
     public String getDeviceClassName()  {
         return config.getString(DEVICE_CLASSNAME);
 
+    }
+
+    public String getDeviceConfigFileName()  {
+        return config.getString(DEVICE_CONFIG_FILENAME);
     }
 
     public boolean isFrequencyAutoAdjustment() {
