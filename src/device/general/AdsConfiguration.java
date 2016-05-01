@@ -37,5 +37,6 @@ public interface AdsConfiguration {
     public int getTotalNumberOfDataSamplesInEachDataRecord();
     public boolean isHighResolutionMode();
     public boolean isLoffEnabled();
+    public boolean isBatteryVoltageMeasureEnabled();
     public void save();
 }

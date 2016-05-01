@@ -14,8 +14,6 @@ class FrameDecoderCh8V1 extends FrameDecoderCh2V1 {
     private static final Log log = LogFactory.getLog(FrameDecoderCh8V1.class);
 
 
-
-
     public FrameDecoderCh8V1(AdsConfiguration configuration) {
         super(configuration);
     }

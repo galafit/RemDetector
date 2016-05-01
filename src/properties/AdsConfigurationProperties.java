@@ -30,6 +30,7 @@ public class AdsConfigurationProperties implements AdsConfiguration {
     private static final String MAX_DIVIDER = "dividerMax";
     private static final String NUMBER_OF_ADS_CHANNELS = "numberOfAdsChannels";
     private static final String AVAILABLE_DIVIDERS = "availableDividers";
+    private static final String IS_BATTERY_VOLTAGE_MEASURE = "isBatteryVoltageMeasureEnabled";
 
     private static final int NUMBER_OF_BYTES_IN_DATA_FORMAT = 3;
     private boolean isHighResolutionMode = true;
@@ -201,6 +202,11 @@ public class AdsConfigurationProperties implements AdsConfiguration {
 
     public boolean isChannelRldSenseEnable(int channelNumber) {
         return config.getBoolean(CHANNEL_IS_RLD_SENSE_ENABLED + channelNumber);
+    }
+
+    @Override
+    public boolean isBatteryVoltageMeasureEnabled() {
+        return config.getBoolean(IS_BATTERY_VOLTAGE_MEASURE);
     }
 
     public void setChannelRldSenseEnabled(int channelNumber, boolean isRldEnabled) {

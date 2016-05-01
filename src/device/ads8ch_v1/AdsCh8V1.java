@@ -1,6 +1,8 @@
 package device.ads8ch_v1;
 
+import device.ads2ch_v1.AdsConfiguratorCh2V1;
 import device.general.Ads;
+import device.general.AdsConfiguration;
 import dreamrec.ApplicationException;
 
 import java.util.ArrayList;
@@ -17,11 +19,16 @@ public class AdsCh8V1  extends Ads {
     private Timer pingTimer;
 
     public AdsCh8V1() {
-        super(new AdsConfiguratorCh8V1());
          pingCommand.add((byte)0xFB);
     }
 
-     @Override
+    @Override
+    public void setAdsConfigurator(AdsConfiguration adsConfiguration) {
+        adsConfigurator = new AdsConfiguratorCh8V1(adsConfiguration);
+    }
+
+
+    @Override
     public void startReading() throws ApplicationException {
         super.startReading();
         TimerTask timerTask = new TimerTask() {

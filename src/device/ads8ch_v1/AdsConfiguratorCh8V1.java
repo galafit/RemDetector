@@ -11,10 +11,11 @@ import java.util.List;
 public class AdsConfiguratorCh8V1 implements AdsConfigurator {
 
     public static final int NUMBER_OF_ADS_CHANNELS = 8;
-    public static final Divider MAX_DIVIDER = Divider.D10;
-    private static final String PROPERTIES_FILE_NAME = "ads8ch_v1_config.properties";
-    private static final int COM_PORT_SPEED = 460800;
-    private AdsConfiguration adsConfiguration = new AdsConfiguration(PROPERTIES_FILE_NAME, NUMBER_OF_ADS_CHANNELS, COM_PORT_SPEED, MAX_DIVIDER);
+    private AdsConfiguration adsConfiguration;
+
+    public AdsConfiguratorCh8V1(AdsConfiguration adsConfiguration) {
+        this.adsConfiguration = adsConfiguration;
+    }
 
 
     @Override

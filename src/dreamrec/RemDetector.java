@@ -30,7 +30,6 @@ public class RemDetector {
             MainWindow mainWindow = new MainWindow(controller, serviceLocator.getGuiConfig());
             Presenter presenter = new Presenter(mainWindow);
             controller.addListener(presenter);
-            System.out.println(ComPort.getportNames()[0]);
 
         } catch (ApplicationException e) {
             showMessage(e.getMessage());
