@@ -17,6 +17,7 @@ public class AdsConfigurationProperties implements AdsConfiguration {
     private static final String COM_PORT_NAME = "comPort";
     private static final String COM_PORT_SPEED = "comPortSpeed";
     private static final String SPS = "sps";
+    private static final String CHANNEL_NAME = "nameChannel";
     private static final String CHANNEL_DIVIDER = "dividerChannel";
     private static final String CHANNEL_GAIN = "gainChannel";
     private static final String CHANNEL_COMMUTATOR_STATE = "commutatorStateChannel";
@@ -25,8 +26,10 @@ public class AdsConfigurationProperties implements AdsConfiguration {
     private static final String CHANNEL_IS_RLD_SENSE_ENABLED = "isRldSenseEnabledChannel";
     private static final String ACCELEROMETER_IS_ENABLED = "isEnabledAccelerometer";
     private static final String ACCELEROMETER_DIVIDER = "dividerAccelerometer";
+    private static final String ACCELEROMETER_NAME = "nameAccelerometer";
     private static final String MAX_DIVIDER = "dividerMax";
     private static final String NUMBER_OF_ADS_CHANNELS = "numberOfAdsChannels";
+    private static final String AVAILABLE_DIVIDERS = "availableDividers";
 
     private static final int NUMBER_OF_BYTES_IN_DATA_FORMAT = 3;
     private boolean isHighResolutionMode = true;
@@ -40,6 +43,38 @@ public class AdsConfigurationProperties implements AdsConfiguration {
         } catch (ConfigurationException e) {
             log.error(e);
         }
+    }
+
+    @Override
+    public Divider[] getChannelsAvailableDividers() {
+        String[] dividerStrings = config.getStringArray(AVAILABLE_DIVIDERS);
+        Divider[] dividers = new Divider[dividerStrings.length];
+        try {
+            for(int i = 0; i< dividerStrings.length; i++) {
+                dividers[i] = Divider.valueOf(Integer.valueOf(dividerStrings[i]));
+
+            }
+        } catch (IllegalArgumentException e) {
+            String msg = "ads_config.properties file: " +  "Available Dividers " + e.getMessage();
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+        return dividers;
+    }
+
+    @Override
+    public int getNumberOfChannels() {
+        return getNumberOfAdsChannels() + 3;
+    }
+
+    @Override
+    public String getChannelName(int channelNumber) {
+        return config.getString(CHANNEL_NAME + channelNumber);
+    }
+
+    @Override
+    public void setChannelName(int channelNumber, String channelName) {
+        config.setProperty(CHANNEL_NAME + channelNumber, channelName);
     }
 
     public int getNumberOfBytesInDataFormat() {
@@ -96,6 +131,11 @@ public class AdsConfigurationProperties implements AdsConfiguration {
         }
     }
 
+    @Override
+    public String getAccelerometerName() {
+        return config.getString(ACCELEROMETER_NAME);
+    }
+
     public boolean isChannelEnabled(int channelNumber) {
         return config.getBoolean(CHANNEL_IS_ENABLED + channelNumber);
     }
@@ -137,6 +177,10 @@ public class AdsConfigurationProperties implements AdsConfiguration {
         return CommutatorState.valueOf(config.getString(CHANNEL_COMMUTATOR_STATE + channelNumber));
     }
 
+    @Override
+    public void setAccelerometerDivider(Divider divider) {
+        config.setProperty(ACCELEROMETER_DIVIDER, divider);
+    }
 
     public void setChannelDivider(int channelNumber, Divider divider) {
         config.setProperty(CHANNEL_DIVIDER + channelNumber, divider);
@@ -182,6 +226,7 @@ public class AdsConfigurationProperties implements AdsConfiguration {
         }
         return totalNumberOfDataSamples;
     }
+
 
     public void save() {
         try {

@@ -5,6 +5,8 @@ public class RemChannels {
     private int accelerometerY;
     private int accelerometerZ;
     private int eog;
+    private boolean[] remActiveChannels;
+
 
     private static final String EOG = "EOG";
     private static final String ACCELEROMETER_X = "Accelerometer X";
@@ -14,11 +16,9 @@ public class RemChannels {
     private static final String ACCELEROMETER_2 = "Accelerometer 2";
     private static final String ACCELEROMETER_3 = "Accelerometer 3";
 
-    public RemChannels(int eog, int accelerometerX, int accelerometerY, int accelerometerZ) throws ApplicationException{
-        init(eog, accelerometerX, accelerometerY, accelerometerZ);
-    }
 
     public RemChannels(String[] signalsLabels) throws ApplicationException{
+        remActiveChannels = new boolean[signalsLabels.length];
         int eogNumber = -1;
         int accelerometerXNumber = -1;
         int accelerometerYNumber = -1;
@@ -26,15 +26,19 @@ public class RemChannels {
         for (int i = 0; i < signalsLabels.length; i++) {
             if (signalsLabels[i].equals(EOG)) {
                 eogNumber = i;
+                remActiveChannels[i] = true;
             }
             if (signalsLabels[i].equals(ACCELEROMETER_X) || signalsLabels[i].equals(ACCELEROMETER_1)) {
                 accelerometerXNumber = i;
+                remActiveChannels[i] = true;
             }
             if (signalsLabels[i].equals(ACCELEROMETER_Y) || signalsLabels[i].equals(ACCELEROMETER_2)) {
                 accelerometerYNumber = i;
+                remActiveChannels[i] = true;
             }
             if (signalsLabels[i].equals(ACCELEROMETER_Z) || signalsLabels[i].equals(ACCELEROMETER_3)) {
                 accelerometerZNumber = i;
+                remActiveChannels[i] = true;
             }
         }
         init(eogNumber, accelerometerXNumber, accelerometerYNumber, accelerometerZNumber);
@@ -98,6 +102,10 @@ public class RemChannels {
 
     public int getEog() {
         return eog;
+    }
+
+    public boolean[] getRemActiveChannels() {
+        return remActiveChannels;
     }
 
 }

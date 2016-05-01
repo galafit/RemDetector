@@ -17,7 +17,7 @@ import java.util.Date;
 public class BdfWriter implements BdfListener {
 
     private static final Log LOG = LogFactory.getLog(BdfWriter.class);
-    private final RecordingBdfConfig recordingBdfConfig;
+    private final BdfHeaderData bdfHeaderData;
     private RandomAccessFile fileToSave;
     private long startRecordingTime;
     private long stopRecordingTime;
@@ -25,13 +25,13 @@ public class BdfWriter implements BdfListener {
     private boolean stopRecordingRequest;
     boolean isFrequencyAutoAdjustment = true;
 
-    public BdfWriter(RecordingBdfConfig recordingBdfConfig, File fileToSave)  throws ApplicationException {
-        this.recordingBdfConfig = recordingBdfConfig;
+    public BdfWriter(BdfHeaderData bdfHeaderData)  throws ApplicationException {
+        this.bdfHeaderData = bdfHeaderData;
         try {
-            this.fileToSave = new RandomAccessFile(fileToSave, "rw");
+            this.fileToSave = new RandomAccessFile(bdfHeaderData.getFile(), "rw");
         } catch (FileNotFoundException e) {
             LOG.error(e);
-            throw new ApplicationException("File: " + fileToSave.getAbsolutePath() + "could not be written");
+            throw new ApplicationException("File: " + bdfHeaderData.getFile().getAbsolutePath() + "could not be written");
         }
     }
 
@@ -44,11 +44,11 @@ public class BdfWriter implements BdfListener {
     public synchronized void onDataRecordReceived(byte[] bdfDataRecord) {
         if (!stopRecordingRequest) {
             if (numberOfDataRecords == 0) {
-                startRecordingTime = System.currentTimeMillis() - (long) recordingBdfConfig.getDurationOfDataRecord(); //1 second (1000 msec) duration of a data record
-                recordingBdfConfig.setStartTime(startRecordingTime);
-                recordingBdfConfig.setNumberOfDataRecords(-1);
+                startRecordingTime = System.currentTimeMillis() - (long) bdfHeaderData.getDurationOfDataRecord(); //1 second (1000 msec) duration of a data record
+                bdfHeaderData.setStartTime(startRecordingTime);
+                bdfHeaderData.setNumberOfDataRecords(-1);
                 try {
-                    fileToSave.write(BdfHeaderWriter.createBdfHeader(recordingBdfConfig));
+                    fileToSave.write(BdfHeaderWriter.createBdfHeader(bdfHeaderData));
                 } catch (IOException e) {
                     LOG.error(e);
                     throw new RuntimeException(e);
@@ -69,17 +69,17 @@ public class BdfWriter implements BdfListener {
     public synchronized void onStopReading() {
         if (stopRecordingRequest) return;
         stopRecordingRequest = true;
-        recordingBdfConfig.setStartTime(startRecordingTime);
-        recordingBdfConfig.setNumberOfDataRecords(numberOfDataRecords);
+        bdfHeaderData.setStartTime(startRecordingTime);
+        bdfHeaderData.setNumberOfDataRecords(numberOfDataRecords);
         // if BdfProvide(device) don't have quartz we should calculate actualDurationOfDataRecord
         double actualDurationOfDataRecord = (stopRecordingTime - startRecordingTime) * 0.001 / numberOfDataRecords;
         try {
             fileToSave.seek(0);
             if(isFrequencyAutoAdjustment) {
-                fileToSave.write(BdfHeaderWriter.createBdfHeader(recordingBdfConfig, actualDurationOfDataRecord));
+                fileToSave.write(BdfHeaderWriter.createBdfHeader(bdfHeaderData, actualDurationOfDataRecord));
             }
             else{
-                fileToSave.write(BdfHeaderWriter.createBdfHeader(recordingBdfConfig));
+                fileToSave.write(BdfHeaderWriter.createBdfHeader(bdfHeaderData));
             }
             fileToSave.close();
         } catch (IOException e) {

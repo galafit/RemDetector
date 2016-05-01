@@ -6,14 +6,20 @@ package device.general;
 public interface AdsConfiguration {
 
     public int getNumberOfBytesInDataFormat();
+    public Divider[] getChannelsAvailableDividers();
     public  Divider getMaxDivider();
     public int getComPortSpeed();
     public int getNumberOfAdsChannels();
+    public int getNumberOfChannels();
+    public String getChannelName(int channelNumber);
+    public void setChannelName(int channelNumber, String channelName);
     public String getComPortName();
     public void setComPortName(String comPortName);
     public Sps getSps();
     public void setSps(Sps sps);
     public Divider getAccelerometerDivider();
+    public String getAccelerometerName();
+    public void setAccelerometerDivider(Divider divider);
     public boolean isChannelEnabled(int channelNumber);
     public void setChannelEnabled(int channelNumber, boolean isEnabled);
     public boolean isAccelerometerEnabled();

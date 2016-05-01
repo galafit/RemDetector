@@ -47,9 +47,9 @@ public class BdfHeaderReader {
     private static final Log log = LogFactory.getLog(BdfHeaderReader.class);
 
 
-    public static RecordingBdfConfig readBdfHeader(File file) throws ApplicationException {
+    public static BdfHeaderData readBdfHeader(File file) throws ApplicationException {
         BufferedReader reader = null;
-        RecordingBdfConfig recordingBdfConfig;
+        BdfHeaderData bdfHeaderData;
         try {
             reader = new BufferedReader(new FileReader(file));
             int VERSION_LENGTH = 8;
@@ -201,13 +201,14 @@ public class BdfHeaderReader {
                 signalConfigArray[signalNumber].setTransducerType(signalTransducerType[signalNumber]);
             }
 
-            recordingBdfConfig = new RecordingBdfConfig(durationOfDataRecord, numberOfBytesInDataFormat, signalConfigArray);
-            recordingBdfConfig.setPatientIdentification(patientIdentification);
-            recordingBdfConfig.setRecordingIdentification(recordIdentification);
-            recordingBdfConfig.setStartTime(startTime);
-            recordingBdfConfig.setNumberOfDataRecords(numberOfDataRecords);
+            bdfHeaderData = new BdfHeaderData(durationOfDataRecord, numberOfBytesInDataFormat, signalConfigArray);
+            bdfHeaderData.setPatientIdentification(patientIdentification);
+            bdfHeaderData.setRecordingIdentification(recordIdentification);
+            bdfHeaderData.setStartTime(startTime);
+            bdfHeaderData.setNumberOfDataRecords(numberOfDataRecords);
+            bdfHeaderData.setFile(file);
             reader.close();
-            return recordingBdfConfig;
+            return bdfHeaderData;
 
         } catch (Exception e) {
             log.error(e);

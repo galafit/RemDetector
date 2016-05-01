@@ -1,6 +1,8 @@
 package dreamrec;
 
 import bdf.*;
+import comport.ComPort;
+import device.general.AdsConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -18,10 +20,9 @@ public class  Controller  implements InputEventHandler {
 
     private List<ControllerListener> listenerList = new ArrayList<ControllerListener>();
 
-    private static final String[] FILE_EXTENSIONS = {"bdf", "edf"};
     private ServiceLocator serviceLocator;
     private BdfProvider bdfProvider;
-    private RecordingBdfConfig recordingBdfConfig;
+    private BdfHeaderData bdfHeaderData;
     private BdfWriter bdfWriter;
     private boolean isRemMode;
 
@@ -49,68 +50,64 @@ public class  Controller  implements InputEventHandler {
     }
 
     @Override
-    public void readFromFile(RecordingSettings recordingSettings, File file) throws ApplicationException {
+    public void readFromFile(BdfHeaderData bdfHeaderData) throws ApplicationException {
         stopRecording();
+        File file = bdfHeaderData.getFile();
         if (file.isFile()) { // file
             BdfReader bdfReader = new BdfReader(file);
             bdfProvider = bdfReader;
-            recordingBdfConfig = bdfReader.getBdfConfig();
+            bdfHeaderData = bdfReader.getBdfConfig();
         }
         else {
             throw new ApplicationException("File: " + file + " is not valid");
         }
-        recordingBdfConfig.setPatientIdentification(recordingSettings.getPatientIdentification());
-        recordingBdfConfig.setRecordingIdentification(recordingSettings.getRecordingIdentification());
-        recordingBdfConfig.setSignalsLabels(recordingSettings.getChannelsLabels());
-        BdfHeaderWriter.writeBdfHeader(recordingBdfConfig, file);
+        bdfHeaderData.setPatientIdentification(bdfHeaderData.getPatientIdentification());
+        bdfHeaderData.setRecordingIdentification(bdfHeaderData.getRecordingIdentification());
+        bdfHeaderData.setSignalsLabels(bdfHeaderData.getSignalsLabels());
+        BdfHeaderWriter.writeBdfHeader(bdfHeaderData, file);
 
         if (isRemMode) {
-            RemChannels remChannels = new RemChannels(recordingBdfConfig.getSignalsLabels());
+            RemChannels remChannels = new RemChannels(bdfHeaderData.getSignalsLabels());
             RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
             dataStore.configure(serviceLocator.getRemConfigurator());
-            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
-            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+            dataStore.setChannelsMask(remChannels.getRemActiveChannels());
+            dataStore.setStartTime(bdfHeaderData.getStartTime());
             fireDataStoreUpdated(dataStore);
 
         } else {
             DataStore dataStore = new DataStore(bdfProvider);
-            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
-            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+            dataStore.setStartTime(bdfHeaderData.getStartTime());
 
             fireDataStoreUpdated(dataStore);
         }
 
         bdfProvider.startReading();
-
     }
 
     @Override
-    public void startRecording(RecordingSettings recordingSettings, File file) throws ApplicationException {
+    public void startRecording(String directory, String filename, String patient, String recording) throws ApplicationException {
         stopRecording();
         BdfProvider bdfDevice = serviceLocator.getDevice();
         bdfProvider = bdfDevice;
-        recordingBdfConfig = new RecordingBdfConfig(bdfDevice.getBdfConfig());
+        bdfHeaderData = new BdfHeaderData(bdfDevice.getBdfConfig());
+        bdfHeaderData.setFile(directory, filename);
+        bdfHeaderData.setPatientIdentification(patient);
+        bdfHeaderData.setRecordingIdentification(recording);
+        bdfWriter = new BdfWriter(bdfHeaderData);
+        bdfWriter.setFrequencyAutoAdjustment(false);
+        bdfProvider.addBdfDataListener(bdfWriter);
 
-        if (file != null && file.isFile()) { // file
-            recordingBdfConfig.setPatientIdentification(recordingSettings.getPatientIdentification());
-            recordingBdfConfig.setRecordingIdentification(recordingSettings.getRecordingIdentification());
-            recordingBdfConfig.setSignalsLabels(recordingSettings.getChannelsLabels());
-            bdfWriter = new BdfWriter(recordingBdfConfig, file);
-            bdfWriter.setFrequencyAutoAdjustment(false);
-            bdfProvider.addBdfDataListener(bdfWriter);
-        }
         if (isRemMode) {
-            RemChannels remChannels = new RemChannels(recordingBdfConfig.getSignalsLabels());
+            RemChannels remChannels = new RemChannels(bdfHeaderData.getSignalsLabels());
             RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
             dataStore.configure(serviceLocator.getRemConfigurator());
-            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
-            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+            dataStore.setChannelsMask(remChannels.getRemActiveChannels());
+            dataStore.setStartTime(bdfHeaderData.getStartTime());
             fireDataStoreUpdated(dataStore);
 
         } else {
             DataStore dataStore = new DataStore(bdfProvider);
-            dataStore.setChannelsMask(recordingSettings.getActiveChannels());
-            dataStore.setStartTime(recordingBdfConfig.getStartTime());
+            dataStore.setStartTime(bdfHeaderData.getStartTime());
 
             fireDataStoreUpdated(dataStore);
         }
@@ -126,61 +123,23 @@ public class  Controller  implements InputEventHandler {
     }
 
     @Override
-    public RecordingSettings getRecordingSettings(File file) throws ApplicationException {
-        RecordingSettings recordingSettings;
-        if(file == null) { // device
-            BdfConfig deviceBdfConfig = serviceLocator.getDevice().getBdfConfig();
-            RecordingBdfConfig recordingBdfConfig = new RecordingBdfConfig(deviceBdfConfig);
-            //recordingBdfConfig.setSignalsLabels(deviceSignalsLabels);
-            recordingSettings = new RecordingSettings(recordingBdfConfig);
-        }
-        else if (file.isFile()) { // file
-            RecordingBdfConfig recordingBdfConfig = BdfHeaderReader.readBdfHeader(file);
-            recordingSettings = new RecordingSettings(recordingBdfConfig);
-            recordingSettings.setFilename(file.getName());
-            recordingSettings.setDirectoryToSave(file.getParent());
-        }
-        else {
-            throw new ApplicationException("File: " + file + " is not valid");
-        }
-
-        if (isRemMode) {
-            boolean[] isChannelsActive = RemChannels.isRemLabels(recordingSettings.getChannelsLabels());
-            recordingSettings.setActiveChannels(isChannelsActive);
-        }
-        return recordingSettings;
+    public BdfHeaderData getFileInfo(File file) throws ApplicationException {
+        return BdfHeaderReader.readBdfHeader(file);
     }
 
     @Override
-    public String normalizeFilename(String filename) {
-        String defaultFilename = new SimpleDateFormat("dd-MM-yyyy_HH-mm").format(new Date(System.currentTimeMillis()))
-                + "." + FILE_EXTENSIONS[0];
-
-        // if filename is default filename
-        if (filename == null || filename.isEmpty()) {
-            return defaultFilename;
-        }
-        filename = filename.trim();
-
-        // if filename has no extension
-        if (filename.lastIndexOf('.') == -1) {
-            filename = filename.concat(".").concat(FILE_EXTENSIONS[0]);
-            return filename;
-        }
-        // if  extension  match with one from given FILE_EXTENSIONS
-        // (?i) makes it case insensitive (catch BDF as well as bdf)
-        for (String ext : FILE_EXTENSIONS) {
-            if (filename.matches("(?i).*\\." + ext)) {
-                return filename;
-            }
-        }
-        // If the extension match with NONE from given FILE_EXTENSIONS. We need to replace it
-        filename = filename.substring(0, filename.lastIndexOf(".") + 1).concat(FILE_EXTENSIONS[0]);
-        return filename;
+    public AdsConfiguration getDeviceConfig() throws ApplicationException {
+        return serviceLocator.getDeviceConfig();
     }
+
 
     @Override
     public String[] getFileExtensions() {
-        return FILE_EXTENSIONS;
+        return BdfHeaderData.FILE_EXTENSIONS;
+    }
+
+    @Override
+    public String[] getComPortNames() {
+        return ComPort.getportNames();
     }
 }

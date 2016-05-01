@@ -17,7 +17,7 @@ import java.util.Date;
 public class BdfHeaderWriter {
     private static final Log LOG = LogFactory.getLog(BdfHeaderWriter.class);
 
-    public static void writeBdfHeader(RecordingBdfConfig recordingBdfConfig, File fileToSave) throws ApplicationException {
+    public static void writeBdfHeader(BdfHeaderData bdfHeaderData, File fileToSave) throws ApplicationException {
         RandomAccessFile fileAccess;
         try {
             fileAccess = new RandomAccessFile(fileToSave, "rw");
@@ -28,7 +28,7 @@ public class BdfHeaderWriter {
         }
 
         try {
-            fileAccess.write(createBdfHeader(recordingBdfConfig));
+            fileAccess.write(createBdfHeader(bdfHeaderData));
             fileAccess.close();
         } catch (IOException e) {
             LOG.error(e);
@@ -36,17 +36,17 @@ public class BdfHeaderWriter {
         }
     }
 
-    public static byte[] createBdfHeader(RecordingBdfConfig recordingBdfConfig) {
-        return createBdfHeader(recordingBdfConfig, 0);
+    public static byte[] createBdfHeader(BdfHeaderData bdfHeaderData) {
+        return createBdfHeader(bdfHeaderData, 0);
     }
 
-    public static byte[] createBdfHeader(RecordingBdfConfig recordingBdfConfig, double actualDurationOfDataRecord) {
-        double durationOfDataRecord = recordingBdfConfig.getDurationOfDataRecord();
+    public static byte[] createBdfHeader(BdfHeaderData bdfHeaderData, double actualDurationOfDataRecord) {
+        double durationOfDataRecord = bdfHeaderData.getDurationOfDataRecord();
         if (actualDurationOfDataRecord > 0) {
             durationOfDataRecord = actualDurationOfDataRecord;
         }
         boolean isBdf = true;
-        if (recordingBdfConfig.getNumberOfBytesInDataFormat() == 2) {
+        if (bdfHeaderData.getNumberOfBytesInDataFormat() == 2) {
             isBdf = false;   // edf file
         }
 
@@ -59,15 +59,15 @@ public class BdfHeaderWriter {
             identificationCode = "";
         }
 
-        String localPatientIdentification = recordingBdfConfig.getPatientIdentification();
-        String localRecordingIdentification = recordingBdfConfig.getRecordingIdentification();
-        long startTime = recordingBdfConfig.getStartTime();
-        int numberOfDataRecords = recordingBdfConfig.getNumberOfDataRecords();
+        String localPatientIdentification = bdfHeaderData.getPatientIdentification();
+        String localRecordingIdentification = bdfHeaderData.getRecordingIdentification();
+        long startTime = bdfHeaderData.getStartTime();
+        int numberOfDataRecords = bdfHeaderData.getNumberOfDataRecords();
 
         String startDateOfRecording = new SimpleDateFormat("dd.MM.yy").format(new Date(startTime));
         String startTimeOfRecording = new SimpleDateFormat("HH.mm.ss").format(new Date(startTime));
 
-        int numberOfSignals = recordingBdfConfig.getNumberOfSignals();  // number of signals in data record = number of active channels
+        int numberOfSignals = bdfHeaderData.getNumberOfSignals();  // number of signals in data record = number of active channels
         int numberOfBytesInHeaderRecord = 256 * (1 + numberOfSignals);
 
         String versionOfDataFormat = "24BIT"; //bdf
@@ -98,7 +98,7 @@ public class BdfHeaderWriter {
         StringBuilder preFilterings = new StringBuilder();
         StringBuilder samplesNumbers = new StringBuilder();
         StringBuilder reservedForChannels = new StringBuilder();
-        SignalConfig[] signalConfigList = recordingBdfConfig.getSignalConfigs();
+        SignalConfig[] signalConfigList = bdfHeaderData.getSignalConfigs();
         for (int i = 0; i < signalConfigList.length; i++) {
             SignalConfig signalConfig = signalConfigList[i];
             labels.append(adjustLength(signalConfig.getLabel(), 16));

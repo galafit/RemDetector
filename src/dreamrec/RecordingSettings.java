@@ -1,8 +1,6 @@
 package dreamrec;
 
-import bdf.RecordingBdfConfig;
-
-import java.io.File;
+import bdf.BdfHeaderData;
 
 /**
  * Created by mac on 30/11/14.
@@ -22,11 +20,11 @@ public class RecordingSettings {
         channelsFrequencies = new int[channelsLabels.length];
     }
 
-    public RecordingSettings(RecordingBdfConfig recordingBdfConfig) {
-        this(recordingBdfConfig.getSignalsLabels());
-        patientIdentification = recordingBdfConfig.getPatientIdentification();
-        recordingIdentification = recordingBdfConfig.getRecordingIdentification();
-        channelsFrequencies = recordingBdfConfig.getNormalizedSignalsFrequencies();
+    public RecordingSettings(BdfHeaderData bdfHeaderData) {
+        this(bdfHeaderData.getSignalsLabels());
+        patientIdentification = bdfHeaderData.getPatientIdentification();
+        recordingIdentification = bdfHeaderData.getRecordingIdentification();
+        channelsFrequencies = bdfHeaderData.getNormalizedSignalsFrequencies();
     }
 
     public String getDirectoryToSave() {

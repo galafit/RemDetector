@@ -98,7 +98,7 @@ public abstract class Ads implements BdfProvider {
                 calibration.setPhysicalMin(-physicalMax);
                 calibration.setPhysicalDimension("uV");
                 SignalConfig signalConfig = new SignalConfig(numberOfSamplesInEachDataRecord, calibration);
-                signalConfig.setLabel("Channel " + (i + 1));
+                signalConfig.setLabel(adsConfiguration.getChannelName(i));
                 signalConfig.setTransducerType("Unknown");
                 signalConfig.setPrefiltering("None");
                 signalConfigList.add(signalConfig);
@@ -114,26 +114,12 @@ public abstract class Ads implements BdfProvider {
                 calibration.setPhysicalMin(-1000);
                 calibration.setPhysicalDimension("mg");
                 SignalConfig signalConfig = new SignalConfig(numberOfSamplesInEachDataRecord, calibration);
-                signalConfig.setLabel("Accelerometer " + (i + 1));
+                signalConfig.setLabel(adsConfiguration.getAccelerometerName() + " " + (i + 1));
                 signalConfig.setTransducerType("Unknown");
                 signalConfig.setPrefiltering("None");
                 signalConfigList.add(signalConfig);
             }
         }
-
-        // channel for device specific information (loff status and so on);
-        int numberOfSamplesInEachDataRecord = 1;
-        Calibration calibration = new Calibration();
-        calibration.setDigitalMax(8388607);
-        calibration.setDigitalMin(-8388608);
-        calibration.setPhysicalMax(8388607);
-        calibration.setPhysicalMin(-8388607);
-        calibration.setPhysicalDimension("");
-        SignalConfig signalConfig = new SignalConfig(numberOfSamplesInEachDataRecord, calibration);
-        signalConfig.setLabel("System events");
-        signalConfig.setTransducerType("Unknown");
-        signalConfig.setPrefiltering("None");
-        signalConfigList.add(signalConfig);
 
         double DurationOfDataRecord = (double) (adsConfiguration.getMaxDivider().getValue() ) / adsConfiguration.getSps().getValue();
         SignalConfig[] signalConfigArray = signalConfigList.toArray(new SignalConfig[signalConfigList.size()]);

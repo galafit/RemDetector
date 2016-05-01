@@ -1,24 +1,28 @@
 package gui;
 
+import bdf.BdfHeaderData;
 import dreamrec.ApplicationException;
 import dreamrec.InputEventHandler;
 import dreamrec.RecordingSettings;
 import graph.GraphViewer;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 
 public class MainWindow extends JFrame {
-    private final String TITLE = "Dream Recorder";
+    private final String TITLE = "BioRecorder";
     private final Color BG_COLOR = Color.BLACK;
     private final Color MENU_BG_COLOR = Color.LIGHT_GRAY;
     private final Color MENU_TEXT_COLOR = Color.BLACK;
 
     protected GraphViewer graphViewer;
-    private JMenuBar menu = new JMenuBar();
+    private JToolBar menu = new JToolBar();
+    private JDialog deviceSettings;
 
     private GuiConfig guiConfig;
     private InputEventHandler eventHandler;
@@ -84,46 +88,41 @@ public class MainWindow extends JFrame {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setBackground(MENU_BG_COLOR);
         fileMenu.setForeground(MENU_TEXT_COLOR);
-        menu.add(fileMenu);
-        JMenuItem open = new JMenuItem("Open");
-        fileMenu.add(open);
 
-        open.addActionListener(new ActionListener() {
+        JButton fileButton = new JButton("File");
+        menu.add(fileButton);
+
+
+        JButton biorecorderButton = new JButton("BioRecorder");
+        menu.add(biorecorderButton);
+
+        fileButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent event) {
+            public void actionPerformed(ActionEvent e) {
                 File file = chooseFileToRead();
                 if (file != null) {
-                   prepareRecord(file);
+                    try {
+                        new FileSettings(MainWindow.this, file, eventHandler);
+                        setTitle(file.getName());
+
+                    } catch (ApplicationException ex) {
+                        showMessage(ex.getMessage());
+                    }
                 }
             }
         });
 
-        JMenu recordMenu = new JMenu("Record");
-        recordMenu.setBackground(MENU_BG_COLOR);
-        recordMenu.setForeground(MENU_TEXT_COLOR);
-        menu.add(recordMenu);
-        JMenuItem start = new JMenuItem("Start");
-        JMenuItem stop = new JMenuItem("Stop");
-        recordMenu.add(start);
-        recordMenu.add(stop);
-
-        start.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                prepareRecord(null);
-            }
-        });
-
-        stop.addActionListener(new ActionListener() {
+        biorecorderButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    eventHandler.stopRecording();
-                } catch (ApplicationException e) {
-                    showMessage(e.getMessage());
+                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler);
+                } catch (ApplicationException ex) {
+                    showMessage(ex.getMessage());
                 }
             }
         });
+
 
         add(menu, BorderLayout.NORTH);
     }
@@ -149,7 +148,7 @@ public class MainWindow extends JFrame {
 
     private File getDirectoryToRead() {
         String directoryToRead = guiConfig.getDirectoryToRead();
-        if(directoryToRead == null || ! new File(directoryToRead).isDirectory()) {
+        if (directoryToRead == null || !new File(directoryToRead).isDirectory()) {
             directoryToRead = System.getProperty("user.dir"); // current working directory ("./");
         }
         return new File(directoryToRead);
@@ -163,7 +162,7 @@ public class MainWindow extends JFrame {
 
     File getDirectoryToSave() {
         String directoryToSave = guiConfig.getDirectoryToSave();
-        if(directoryToSave == null || ! new File(directoryToSave).isDirectory()) {
+        if (directoryToSave == null || !new File(directoryToSave).isDirectory()) {
             directoryToSave = System.getProperty("user.dir"); // current working directory ("./");
         }
         return new File(directoryToSave);
@@ -171,31 +170,5 @@ public class MainWindow extends JFrame {
 
     void setDirectoryToSave(String directoryToSave) {
         guiConfig.setDirectoryToSave(directoryToSave);
-    }
-
-    void startRecording(RecordingSettings recordingSettings, File file) throws ApplicationException {
-        if(file == null || recordingSettings.getDirectoryToSave() != file.getParent()) {
-            guiConfig.setDirectoryToSave(recordingSettings.getDirectoryToSave());
-            eventHandler.startRecording(recordingSettings, file);
-        }
-        if(file != null) {
-            setTitle(file.getName());
-        }
-    }
-
-    String normalizeFilename(String filename) {
-        return eventHandler.normalizeFilename(filename);
-    }
-
-    private void prepareRecord(File file) {
-        try{
-            RecordingSettings recordingSettings = eventHandler.getRecordingSettings(file);
-            if(recordingSettings.getDirectoryToSave() == null) {
-                recordingSettings.setDirectoryToSave(guiConfig.getDirectoryToSave());
-            }
-            new SettingsDialog(this, recordingSettings);
-        } catch (ApplicationException e) {
-            showMessage(e.getMessage());
-        }
     }
 }

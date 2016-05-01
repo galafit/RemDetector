@@ -8,7 +8,7 @@ import java.util.List;
 /**
  *
  */
-public class BdfHeaderData {
+public class BdfHeaderDataOld {
 
     private String fileNameToSave;
     private AdsConfiguration adsConfiguration;
@@ -20,12 +20,12 @@ public class BdfHeaderData {
     List<String> adsChannelNames = new ArrayList<String>();
     List<String> accelerometerChannelNames = new ArrayList<String>();
 
-    public BdfHeaderData(AdsConfiguration adsConfiguration) {
+    public BdfHeaderDataOld(AdsConfiguration adsConfiguration) {
         this.adsConfiguration = adsConfiguration;
         for (int i = 0; i < adsConfiguration.getNumberOfAdsChannels(); i++) {
               adsChannelNames.add("Channel " + (i+1));
         }
-        accelerometerChannelNames.add("Accelerometer X");
+        accelerometerChannelNames.add("Accelerometer 1");
         accelerometerChannelNames.add("Accelerometer Y");
         accelerometerChannelNames.add("Accelerometer Z");
     }

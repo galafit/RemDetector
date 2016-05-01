@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class BdfReader implements BdfProvider {
     private static final Log log = LogFactory.getLog(BdfReader.class);
     private BufferedInputStream fileInputStream;
-    private RecordingBdfConfig recordingBdfConfig;
+    private BdfHeaderData bdfHeaderData;
     private int BUFFER_SIZE = 64 * 1028; // It is best to use buffer sizes that are multiples of 1024 bytes
     private boolean isFileOpen = false;
     private int totalNumberOfSamplesInEachDataRecord;
@@ -25,10 +25,10 @@ public class BdfReader implements BdfProvider {
 
     public BdfReader(File file) throws ApplicationException {
         try {
-            recordingBdfConfig = BdfHeaderReader.readBdfHeader(file);
+            bdfHeaderData = BdfHeaderReader.readBdfHeader(file);
             totalNumberOfSamplesInEachDataRecord = getTotalNumberOfBytesInDataRecord();
             fileInputStream = new BufferedInputStream(new FileInputStream(file), BUFFER_SIZE);
-            int numberOfBytesInHeader = 256 + 256 * recordingBdfConfig.getNumberOfSignals();
+            int numberOfBytesInHeader = 256 + 256 * bdfHeaderData.getNumberOfSignals();
             if(fileInputStream.skip(numberOfBytesInHeader) == numberOfBytesInHeader) {
                 isFileOpen = true;
             } else {
@@ -43,11 +43,11 @@ public class BdfReader implements BdfProvider {
 
     private int getTotalNumberOfBytesInDataRecord() {
         int totalNumberOfSamplesInEachDataRecord = 0;
-        SignalConfig[] signalConfigs = recordingBdfConfig.getSignalConfigs();
-        for (int signalNumber = 0; signalNumber < recordingBdfConfig.getNumberOfSignals(); signalNumber++) {
+        SignalConfig[] signalConfigs = bdfHeaderData.getSignalConfigs();
+        for (int signalNumber = 0; signalNumber < bdfHeaderData.getNumberOfSignals(); signalNumber++) {
             totalNumberOfSamplesInEachDataRecord += signalConfigs[signalNumber].getNumberOfSamplesInEachDataRecord();
         }
-        return totalNumberOfSamplesInEachDataRecord * recordingBdfConfig.getNumberOfBytesInDataFormat();
+        return totalNumberOfSamplesInEachDataRecord * bdfHeaderData.getNumberOfBytesInDataFormat();
     }
 
 
@@ -108,8 +108,8 @@ public class BdfReader implements BdfProvider {
     }
 
     @Override
-    public RecordingBdfConfig getBdfConfig() {
-        return recordingBdfConfig;
+    public BdfHeaderData getBdfConfig() {
+        return bdfHeaderData;
     }
 
 }

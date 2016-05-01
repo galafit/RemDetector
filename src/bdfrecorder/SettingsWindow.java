@@ -1,15 +1,10 @@
 package bdfrecorder;
 
 
-import com.crostec.ads.*;
+
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 
 /**
@@ -17,7 +12,7 @@ import java.util.List;
  */
 public class SettingsWindow extends JFrame  {
 
-    private BdfHeaderData bdfHeaderData;
+    private BdfHeaderDataOld bdfHeaderData;
     private int adsDataFrameSize;
     private int adsDataFrameCounter;
     private int adsDataFrameFrequency;
@@ -64,8 +59,7 @@ public class SettingsWindow extends JFrame  {
             new JLabel("Gain"), new JLabel("Commutator State"), new JLabel("Lead Off Detection"), new JLabel(" ")};
 
 
-    public SettingsWindow(Controller controller, BdfHeaderData bdfHeaderData) {
-        this.controller = controller;
+ /*   public SettingsWindow( BdfHeaderDataOld bdfHeaderData) {
         this.bdfHeaderData = bdfHeaderData;
         init();
         arrangeForm();
@@ -666,5 +660,5 @@ public class SettingsWindow extends JFrame  {
                 enableAdsChannel(channelNumber, false);
             }
         }
-    }
+    }*/
 }
