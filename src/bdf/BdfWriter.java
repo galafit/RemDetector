@@ -44,7 +44,7 @@ public class BdfWriter implements BdfListener {
     public synchronized void onDataRecordReceived(byte[] bdfDataRecord) {
         if (!stopRecordingRequest) {
             if (numberOfDataRecords == 0) {
-                startRecordingTime = System.currentTimeMillis() - (long) bdfHeaderData.getDurationOfDataRecord(); //1 second (1000 msec) duration of a data record
+                startRecordingTime = System.currentTimeMillis() - (long) bdfHeaderData.getDurationOfDataRecord()*1000; //1 second (1000 msec) duration of a data record
                 bdfHeaderData.setStartTime(startRecordingTime);
                 bdfHeaderData.setNumberOfDataRecords(-1);
                 try {

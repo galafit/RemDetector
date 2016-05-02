@@ -1,11 +1,19 @@
 package properties;
 
 import dreamrec.ApplicationException;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.FileConfiguration;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class ApplicationProperties extends FileProperties {
+public class ApplicationProperties  {
+    private static final Log log = LogFactory.getLog(ApplicationProperties.class);
+
     private static final String DEVICE_CLASSNAME = "device.classname";
     private static final String DEVICE_CONFIG_FILENAME = "device.config_filename";
     private static final String DEVICE_CHANNEL_NAME = "device.channel.name";
@@ -14,9 +22,16 @@ public class ApplicationProperties extends FileProperties {
     private static final String ACCELEROMETER_REM_FREQUENCY = "rem.accelerometer_frequency";
     private static final String EOG_REM_FREQUENCY = "rem.eog_frequency";
 
-    public ApplicationProperties(String file) throws ApplicationException {
-        super(file);
+    private FileConfiguration config;
 
+    public ApplicationProperties(String file) throws ApplicationException {
+        try {
+            config = new PropertiesConfiguration(file);
+            config.setAutoSave(false);
+        } catch (ConfigurationException e) {
+            log.error(e);
+            throw new ApplicationException("Error reading from properties file: " + file);
+        }
     }
 
     public String getDeviceClassName()  {

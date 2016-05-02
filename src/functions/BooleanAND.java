@@ -17,7 +17,7 @@ public class BooleanAND implements DataSeries {
 
 
     public void add(DataSeries inputData) throws ApplicationException {
-        if (inputDataList.size() == 0 && inputData.getScaling() != null) {
+      /*  if (inputDataList.size() == 0 && inputData.getScaling() != null) {
             scaling = new ScalingImpl();
             scaling.setSamplingInterval(inputData.getScaling().getSamplingInterval());
             scaling.setStart(inputData.getScaling().getStart());
@@ -25,7 +25,7 @@ public class BooleanAND implements DataSeries {
         }
         if (!isCompatible(getScaling(), inputData.getScaling())) {
             throw new ApplicationException(errMsg);
-        }
+        }*/
         inputDataList.add(inputData);
     }
 
@@ -66,6 +66,9 @@ public class BooleanAND implements DataSeries {
 
     @Override
     public Scaling getScaling() {
-        return scaling;
+        if (inputDataList.size() > 0) {
+            return inputDataList.get(0).getScaling();
+        }
+        return null;
     }
 }

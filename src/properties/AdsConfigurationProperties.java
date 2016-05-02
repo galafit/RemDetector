@@ -34,11 +34,9 @@ public class AdsConfigurationProperties implements AdsConfiguration {
 
     private static final int NUMBER_OF_BYTES_IN_DATA_FORMAT = 3;
     private boolean isHighResolutionMode = true;
-    private String fileName;
     private PropertiesConfiguration config;
 
     public AdsConfigurationProperties(String propertiesFileName) {
-        fileName = propertiesFileName;
         try {
             config = new PropertiesConfiguration(propertiesFileName);
         } catch (ConfigurationException e) {
@@ -236,7 +234,7 @@ public class AdsConfigurationProperties implements AdsConfiguration {
 
     public void save() {
         try {
-            config.save(fileName);
+            config.save();
         } catch (ConfigurationException e) {
             log.error(e);
         }

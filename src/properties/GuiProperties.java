@@ -2,37 +2,61 @@ package properties;
 
 import dreamrec.ApplicationException;
 import gui.GuiConfig;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.FileConfiguration;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-public class  GuiProperties extends FileProperties implements GuiConfig{
+import java.io.File;
+
+public class GuiProperties implements GuiConfig {
+    private static final Log log = LogFactory.getLog(GuiProperties.class);
+
     private static final String DIRECTORY_TO_READ = "directory_to_read";
     private static final String DIRECTORY_TO_SAVE = "directory_to_save";
 
-    public GuiProperties(String file) throws ApplicationException {
-        super(file);
+    private FileConfiguration config;
 
+    public GuiProperties(String filename) throws ApplicationException {
+        File file = new File(filename);
+        try {
+            config = new PropertiesConfiguration(file);
+            config.setAutoSave(true);
+        } catch (ConfigurationException e) {
+            log.error(e);
+            throw new ApplicationException("Error reading from properties file: " + file);
+        }
     }
 
-
     @Override
-    public String getDirectoryToSave() {
-        return config.getString(DIRECTORY_TO_SAVE);
+    public File getDirectoryToSave() {
+        String dir = config.getString(DIRECTORY_TO_SAVE);
+        if(dir != null && !dir.isEmpty()) {
+            return new File(dir);
+        }
+        return null;
     }
 
     @Override
-    public String getDirectoryToRead() {
-        return config.getString(DIRECTORY_TO_READ);
+    public File getDirectoryToRead() {
+        String dir = config.getString(DIRECTORY_TO_READ);
+        if(dir != null && !dir.isEmpty()) {
+            return new File(dir);
+        }
+        return null;
     }
 
     @Override
     public void setDirectoryToSave(String directory) {
-        if(directory != null) {
+        if (directory != null) {
             config.setProperty(DIRECTORY_TO_SAVE, directory);
         }
     }
 
     @Override
     public void setDirectoryToRead(String directory) {
-        if(directory != null) {
+        if (directory != null) {
             config.setProperty(DIRECTORY_TO_READ, directory);
         }
     }

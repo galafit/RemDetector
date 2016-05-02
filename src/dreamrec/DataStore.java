@@ -11,7 +11,9 @@ import prefilters.PreFilterAdapter;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class DataStore implements BdfListener {
@@ -130,11 +132,17 @@ public class DataStore implements BdfListener {
     }
 
 
-    public void setStartTime(long startTime) {
-        for (int i = 0; i < channelsList.length; i++) {
-            ScalingImpl scaling = (ScalingImpl) channelsList[i].getScaling();
-            scaling.setStart(startTime);
-        }
+    public void setStartTime(long time) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < channelsList.length; i++) {
+                    ScalingImpl scaling = (ScalingImpl) channelsList[i].getScaling();
+                    scaling.setStart(time);
+                }
+
+            }
+        });
     }
 
     public void addListener(DataStoreListener dataStoreListener) {
@@ -151,13 +159,13 @@ public class DataStore implements BdfListener {
     private void start() {
         updateTimer.start();
         if (getStartTime() <= 0) {
-            long startTime = System.currentTimeMillis() - (long) bdfConfig.getDurationOfDataRecord(); //1 second (1000 msec) duration of a data record
+            long startTime = System.currentTimeMillis() - (long) bdfConfig.getDurationOfDataRecord()*1000; //1 second (1000 msec) duration of a data record
             setStartTime(startTime);
         }
 
     }
 
-    private long getStartTime() {
+    public long getStartTime() {
         long startTime = 0;
         if(channelsList.length > 0 && channelsList[0] != null) {
             startTime = (long)channelsList[0].getScaling().getStart();

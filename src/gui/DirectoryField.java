@@ -16,11 +16,10 @@ public class DirectoryField extends JComboBox{
 
     public DirectoryField() { this(null); }
 
-    public DirectoryField(@Nullable String root) {
-        if(root == null) {
-            root = System.getProperty("user.home");
+    public DirectoryField(@Nullable File root) {
+        if(root != null) {
+            fileChooser = new JFileChooser(root);
         }
-        fileChooser = new JFileChooser(root);
         fileChooser.setDialogTitle("Specify a directory to save");
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fileChooser.setAcceptAllFileFilterUsed(false);

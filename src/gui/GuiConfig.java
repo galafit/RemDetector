@@ -1,10 +1,10 @@
 package gui;
 
+import java.io.File;
+
 public interface GuiConfig {
-    public String getDirectoryToSave();
-    public String getDirectoryToRead();
- //   public String getUserName();
- //   public void setUserName(String userName);
+    public File getDirectoryToSave();
+    public File getDirectoryToRead();
     public void setDirectoryToSave(String directory);
     public void setDirectoryToRead(String directory);
 }

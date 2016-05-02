@@ -115,6 +115,8 @@ public class RemDataStore  implements DataStoreListener {
         dataStore.setStartTime(startTime);
     }
 
+    public long getStartTime() { return dataStore.getStartTime(); }
+
 
     @Override
     public void onDataUpdate() {

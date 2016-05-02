@@ -1,5 +1,8 @@
 package graph;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  *  Presenter действует над Моделью и Представлением.
  *  Класс-прослойка, позволяющая удалить зависимость View от Model
@@ -41,6 +44,7 @@ public class GraphPresenter implements GraphControllerListener{
 
         graphView.setGraphScaling(graphModel.getGraphsScaling());
         graphView.setPreviewScaling(graphModel.getPreviewsScaling());
+
 
         for (int i = 0; i < graphView.getNumberOfGraphPanels(); i++) {
             graphView.setPanelGraphs(graphModel.getGraphCluster(i), i);

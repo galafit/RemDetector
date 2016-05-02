@@ -21,11 +21,6 @@ public class HiPassCollectingFilter implements DataSeries {
             samplingInterval = inputData.getScaling().getSamplingInterval();
         }
         bufferSize = (int)(cutOffInterval / samplingInterval);
-        ScalingImpl scaling = new ScalingImpl(inputData.getScaling());
-        if(bufferSize > 0) {
-            scaling.setDataOffset(0);
-        }
-        outputData.setScaling(scaling);
         collectData();
     }
 
@@ -67,6 +62,11 @@ public class HiPassCollectingFilter implements DataSeries {
 
     @Override
     public Scaling getScaling() {
+        ScalingImpl scaling = new ScalingImpl(inputData.getScaling());
+        if(bufferSize > 0) {
+            scaling.setDataOffset(0);
+        }
+        outputData.setScaling(scaling);
         return outputData.getScaling();
     }
 

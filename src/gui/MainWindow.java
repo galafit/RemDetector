@@ -116,7 +116,7 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler);
+                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler, guiConfig);
                 } catch (ApplicationException ex) {
                     showMessage(ex.getMessage());
                 }
@@ -134,41 +134,15 @@ public class MainWindow extends JFrame {
             extensionDescription = extensionDescription.concat(", ").concat(fileExtensions[i]);
         }
         JFileChooser fileChooser = new JFileChooser();
-
-        fileChooser.setCurrentDirectory(getDirectoryToRead());
+        fileChooser.setCurrentDirectory(guiConfig.getDirectoryToRead());
         fileChooser.setFileFilter(new FileNameExtensionFilter(extensionDescription, fileExtensions));
         int fileChooserState = fileChooser.showOpenDialog(this);
         if (fileChooserState == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            setDirectoryToRead(file.getParent());
+            guiConfig.setDirectoryToRead(file.getParent());
             return file;
         }
         return null;
     }
 
-    private File getDirectoryToRead() {
-        String directoryToRead = guiConfig.getDirectoryToRead();
-        if (directoryToRead == null || !new File(directoryToRead).isDirectory()) {
-            directoryToRead = System.getProperty("user.dir"); // current working directory ("./");
-        }
-        return new File(directoryToRead);
-    }
-
-    private void setDirectoryToRead(String directoryToRead) {
-        guiConfig.setDirectoryToRead(directoryToRead);
-    }
-
-// methods used by SettingsDialog
-
-    File getDirectoryToSave() {
-        String directoryToSave = guiConfig.getDirectoryToSave();
-        if (directoryToSave == null || !new File(directoryToSave).isDirectory()) {
-            directoryToSave = System.getProperty("user.dir"); // current working directory ("./");
-        }
-        return new File(directoryToSave);
-    }
-
-    void setDirectoryToSave(String directoryToSave) {
-        guiConfig.setDirectoryToSave(directoryToSave);
-    }
 }

@@ -92,9 +92,6 @@ public class FrameDecoderCh2V1 extends FrameDecoder {
             }
         }
 
-        for (int i = 0; i < 3; i++) {
-            decodedFrame[decodedFrameOffset++] = 0;
-        }
         int numberOfLostFrames = getNumberOfLostFrames(counter);
         if (numberOfLostFrames > 0) {
             log.info(numberOfLostFrames + " lost frames");
@@ -134,7 +131,6 @@ public class FrameDecoderCh2V1 extends FrameDecoder {
         if (configuration.isAccelerometerEnabled()) {
             result += 3;
         }
-        result += 1;
         return result * 3;
     }
 

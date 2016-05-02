@@ -68,16 +68,18 @@ public class RemChannels {
 
     private void init(int eog, int accelerometerX, int accelerometerY, int accelerometerZ) throws ApplicationException{
         if(accelerometerX < 0) {
-            throw new ApplicationException("AccelerometerX channel number is not specified");
+            throw new ApplicationException("Accelerometer 1, Accelerometer 2 and Accelerometer 3 channels must be specified!");
         }
         if(accelerometerY < 0) {
-            throw new ApplicationException("AccelerometerY channel number is not specified");
+            throw new ApplicationException("Accelerometer 1, Accelerometer 2 and Accelerometer 3 channels must be specified!");
+
         }
         if(accelerometerZ < 0) {
-            throw new ApplicationException("AccelerometerZ channel number is not specified");
+            throw new ApplicationException("Accelerometer 1, Accelerometer 2 and Accelerometer 3 channels must be specified!");
+
         }
         if(eog < 0) {
-            throw new ApplicationException("EOG channel number is not specified");
+            throw new ApplicationException("EOG channel must be specified!");
         }
 
         this.accelerometerX = accelerometerX;

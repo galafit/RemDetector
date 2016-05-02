@@ -50,9 +50,9 @@ public class  Controller  implements InputEventHandler {
     }
 
     @Override
-    public void readFromFile(BdfHeaderData bdfHeaderData) throws ApplicationException {
+    public void readFromFile(BdfHeaderData bdfHeaderDataNew) throws ApplicationException {
         stopRecording();
-        File file = bdfHeaderData.getFile();
+        File file = bdfHeaderDataNew.getFile();
         if (file.isFile()) { // file
             BdfReader bdfReader = new BdfReader(file);
             bdfProvider = bdfReader;
@@ -61,10 +61,10 @@ public class  Controller  implements InputEventHandler {
         else {
             throw new ApplicationException("File: " + file + " is not valid");
         }
-        bdfHeaderData.setPatientIdentification(bdfHeaderData.getPatientIdentification());
-        bdfHeaderData.setRecordingIdentification(bdfHeaderData.getRecordingIdentification());
-        bdfHeaderData.setSignalsLabels(bdfHeaderData.getSignalsLabels());
-        BdfHeaderWriter.writeBdfHeader(bdfHeaderData, file);
+        bdfHeaderData.setPatientIdentification(bdfHeaderDataNew.getPatientIdentification());
+        bdfHeaderData.setRecordingIdentification(bdfHeaderDataNew.getRecordingIdentification());
+        bdfHeaderData.setSignalsLabels(bdfHeaderDataNew.getSignalsLabels());
+        BdfHeaderWriter.writeBdfHeader(bdfHeaderDataNew, file);
 
         if (isRemMode) {
             RemChannels remChannels = new RemChannels(bdfHeaderData.getSignalsLabels());
@@ -96,13 +96,11 @@ public class  Controller  implements InputEventHandler {
         bdfWriter = new BdfWriter(bdfHeaderData);
         bdfWriter.setFrequencyAutoAdjustment(false);
         bdfProvider.addBdfDataListener(bdfWriter);
-
         if (isRemMode) {
             RemChannels remChannels = new RemChannels(bdfHeaderData.getSignalsLabels());
             RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
             dataStore.configure(serviceLocator.getRemConfigurator());
             dataStore.setChannelsMask(remChannels.getRemActiveChannels());
-            dataStore.setStartTime(bdfHeaderData.getStartTime());
             fireDataStoreUpdated(dataStore);
 
         } else {

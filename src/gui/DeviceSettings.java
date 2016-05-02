@@ -1,6 +1,5 @@
 package gui;
 
-import bdfrecorder.MarkerLabel;
 import device.general.*;
 import dreamrec.ApplicationException;
 import dreamrec.InputEventHandler;
@@ -43,15 +42,10 @@ public class DeviceSettings extends JDialog  {
     private JTextField recordingIdentification;
     private JButton startButton = new JButton("Start");
     private JButton stopButton = new JButton("Stop");
+    private JButton cancelButton = new JButton("Cancel");
 
     private JTextField filename;
     private DirectoryField directory;
-
-    private Color colorProcess = Color.GREEN;
-    private Color colorProblem = Color.RED;
-    private Color colorInfo = Color.GRAY;
-    private MarkerLabel markerLabel = new MarkerLabel();
-    private JLabel reportLabel = new JLabel(" ");
 
     private String title = "Recorder Configuration";
     private JComponent[] channelsHeaders = {new JLabel("Number"), new JLabel("Enable"), new JLabel("Name"), new JLabel("Frequency (Hz)"),
@@ -59,12 +53,14 @@ public class DeviceSettings extends JDialog  {
 
     private InputEventHandler eventHandler;
     private AdsConfiguration deviceConfig;
+    private GuiConfig guiConfig;
 
 
-    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler) throws ApplicationException {
+    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler, GuiConfig guiConfig) throws ApplicationException {
         super(parent, Dialog.ModalityType.APPLICATION_MODAL);
         deviceConfig = eventHandler.getDeviceConfig();
         this.eventHandler = eventHandler;
+        this.guiConfig = guiConfig;
         init();
         arrangeForm();
         setActions();
@@ -87,7 +83,7 @@ public class DeviceSettings extends JDialog  {
         filename = new JTextField(fieldLength);
 
         fieldLength = 50;
-        directory = new DirectoryField();
+        directory = new DirectoryField(guiConfig.getDirectoryToSave());
         directory.setLength(fieldLength);
 
         channelFrequency = new JComboBox[adsChannelsNumber];
@@ -139,6 +135,16 @@ public class DeviceSettings extends JDialog  {
                 }
             }
         });
+
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                dispose();
+            }
+        });
+
+
 
         for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
             channelEnable[i].addActionListener(new AdsChannelEnableListener(i));
@@ -301,6 +307,7 @@ public class DeviceSettings extends JDialog  {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, hgap, vgap));
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
+        buttonPanel.add(cancelButton);
 
         // Root Panel of the SettingsWindow
         add(topPanel, BorderLayout.NORTH);
@@ -340,36 +347,6 @@ public class DeviceSettings extends JDialog  {
     }
 
 
-    private void disableFields() {
-        boolean isEnable = false;
-        disableEnableFields(isEnable);
-    }
-
-
-    private void enableFields() {
-        boolean isEnable = true;
-        disableEnableFields(isEnable);
-        for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
-            if (!isChannelEnable(i)) {
-                enableAdsChannel(i, false);
-            }
-        }
-        if (! deviceConfig.isAccelerometerEnabled()) {
-            enableAccelerometer(false);
-        }
-    }
-
-    private void setReport(String report, Color markerColor) {
-        int rowLength = 100;
-        String htmlReport = convertToHtml(report, rowLength);
-        reportLabel.setText(htmlReport);
-        markerLabel.setColor(markerColor);
-    }
-
-    public void setProcessReport(String report) {
-        setReport(report, colorProcess);
-    }
-
     private void loadDataFromModel() {
         spsField.setSelectedItem(deviceConfig.getSps());
         comPort.setSelectedItem(deviceConfig.getComPortName());
@@ -401,7 +378,7 @@ public class DeviceSettings extends JDialog  {
         deviceConfig.setComPortName(getComPort());
         for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
             deviceConfig.setChannelDivider(i, getChannelDivider(i));
-            deviceConfig.setChannelEnabled(i, isEnabled());
+            deviceConfig.setChannelEnabled(i, isChannelEnable(i));
             deviceConfig.setChannelGain(i, getChannelGain(i));
             deviceConfig.setChannelName(i, getChannelName(i));
             deviceConfig.setChannelCommutatorState(i, getChannelCommutatorState(i));
@@ -409,8 +386,7 @@ public class DeviceSettings extends JDialog  {
         deviceConfig.setAccelerometerEnabled(isAccelerometerEnable());
         deviceConfig.setAccelerometerDivider(getAccelerometerDivider());
         deviceConfig.save();
-
-
+        guiConfig.setDirectoryToSave(getDirectory());
     }
 
     private void setChannelsFrequencies(Sps sps) {
@@ -524,7 +500,7 @@ public class DeviceSettings extends JDialog  {
     }
 
     private String getFilename() {
-        if(filename.getText() != FILENAME_PATTERN){
+        if(!FILENAME_PATTERN.equals(filename.getText())){
             return filename.getText();
         }
         return null;

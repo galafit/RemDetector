@@ -21,13 +21,13 @@ public class Composition implements DataSeries {
             "- have the same sensitivity";
 
     public void add(DataSeries inputData) throws ApplicationException {
-        if(inputDataList.size() == 0 && inputData.getScaling() != null) {
+      /*  if(inputDataList.size() == 0 && inputData.getScaling() != null) {
             scaling = new ScalingImpl(inputData.getScaling());
 
         }
         if(! ScalingImpl.isCompatible(getScaling(), inputData.getScaling())){
             throw new ApplicationException(errMsg);
-        }
+        }*/
         inputDataList.add(inputData);
     }
 
@@ -60,6 +60,9 @@ public class Composition implements DataSeries {
 
     @Override
     public Scaling getScaling() {
-        return scaling;
+        if (inputDataList.size() > 0) {
+            return inputDataList.get(0).getScaling();
+        }
+        return null;
     }
 }

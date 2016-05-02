@@ -25,6 +25,7 @@ public class Presenter implements  ControllerListener {
     MainWindow mainWindow;
     GraphViewer graphViewer;
 
+
     public Presenter(MainWindow mainWindow) {
         this.mainWindow = mainWindow;
     }
