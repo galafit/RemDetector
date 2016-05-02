@@ -10,6 +10,8 @@ import properties.AdsConfigurationProperties;
 import properties.ApplicationProperties;
 import properties.GuiProperties;
 
+import java.io.File;
+
 public class PropertiesServiceLocator implements ServiceLocator {
     private static final Log log = LogFactory.getLog(PropertiesServiceLocator.class);
     ApplicationProperties appProperties;
@@ -20,7 +22,7 @@ public class PropertiesServiceLocator implements ServiceLocator {
 
     @Override
     public GuiConfig getGuiConfig() throws ApplicationException {
-        return new GuiProperties("gui.properties");
+        return new GuiProperties(new File("gui.properties"));
     }
 
     @Override
@@ -29,7 +31,9 @@ public class PropertiesServiceLocator implements ServiceLocator {
         if(adsConfigFilename == null || adsConfigFilename.isEmpty()) {
             throw new ApplicationException("Device Configuration file is not specified");
         }
-        return new AdsConfigurationProperties(appProperties.getDeviceConfigFileName());
+        //return new AdsConfigurationProperties(appProperties.getDeviceConfigFileName());
+
+        return new AdsConfigurationProperties( new File(appProperties.getDeviceConfigFileName()));
     }
 
     @Override

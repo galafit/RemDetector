@@ -132,7 +132,7 @@ public class DataStore implements BdfListener {
     }
 
 
-    public void setStartTime(long time) {
+    public void setStartTime(final long time) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

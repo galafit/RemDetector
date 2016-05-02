@@ -212,9 +212,6 @@ public class DeviceSettings extends JDialog  {
     private void arrangeForm() {
         setTitle(title);
 
-
-
-
         int hgap = 5;
         int vgap = 0;
         JPanel spsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));

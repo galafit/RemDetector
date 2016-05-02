@@ -18,8 +18,7 @@ public class GuiProperties implements GuiConfig {
 
     private FileConfiguration config;
 
-    public GuiProperties(String filename) throws ApplicationException {
-        File file = new File(filename);
+    public GuiProperties(File file) throws ApplicationException {
         try {
             config = new PropertiesConfiguration(file);
             config.setAutoSave(true);

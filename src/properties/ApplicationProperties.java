@@ -8,6 +8,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -24,7 +25,7 @@ public class ApplicationProperties  {
 
     private FileConfiguration config;
 
-    public ApplicationProperties(String file) throws ApplicationException {
+    public ApplicationProperties(File file) throws ApplicationException {
         try {
             config = new PropertiesConfiguration(file);
             config.setAutoSave(false);

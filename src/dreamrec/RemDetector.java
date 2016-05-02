@@ -1,10 +1,10 @@
 package dreamrec;
 
-import comport.ComPort;
 import gui.MainWindow;
 import properties.ApplicationProperties;
 
 import javax.swing.*;
+import java.io.File;
 
 
 /**
@@ -23,7 +23,7 @@ public class RemDetector {
         }
 
         try {
-            ApplicationProperties applicationProperties = new ApplicationProperties("application.properties");
+            ApplicationProperties applicationProperties = new ApplicationProperties(new File("application.properties"));
             ServiceLocator serviceLocator = new PropertiesServiceLocator(applicationProperties);
             Controller controller = new Controller(serviceLocator);
             controller.setRemMode(true);

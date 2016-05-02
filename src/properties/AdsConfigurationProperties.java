@@ -7,6 +7,8 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
+
 /**
  *
  */
@@ -36,9 +38,9 @@ public class AdsConfigurationProperties implements AdsConfiguration {
     private boolean isHighResolutionMode = true;
     private PropertiesConfiguration config;
 
-    public AdsConfigurationProperties(String propertiesFileName) {
+    public AdsConfigurationProperties(File propertiesFile) {
         try {
-            config = new PropertiesConfiguration(propertiesFileName);
+            config = new PropertiesConfiguration(propertiesFile);
         } catch (ConfigurationException e) {
             log.error(e);
         }
