@@ -1,6 +1,10 @@
 package dreamrec;
 
+import comport.ComportFacade;
 import gui.MainWindow;
+import gui.comport_gui.ComPortModelMock;
+import gui.comport_gui.ComportModelInterface;
+import gui.comport_gui.ComportUI;
 import properties.ApplicationProperties;
 
 import javax.swing.*;
@@ -27,7 +31,12 @@ public class RemDetector {
             ServiceLocator serviceLocator = new PropertiesServiceLocator(applicationProperties);
             Controller controller = new Controller(serviceLocator);
             controller.setRemMode(true);
-            MainWindow mainWindow = new MainWindow(controller, serviceLocator.getGuiConfig());
+
+
+            ComportModelInterface comportModel = new ComportFacade(serviceLocator.getDeviceConfig());
+            ComportUI comportUI = new ComportUI(comportModel);
+
+            MainWindow mainWindow = new MainWindow(controller, serviceLocator.getGuiConfig(), comportUI);
             Presenter presenter = new Presenter(mainWindow);
             controller.addListener(presenter);
 

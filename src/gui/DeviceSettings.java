@@ -19,7 +19,6 @@ public class DeviceSettings extends JDialog  {
     private String patientIdentificationLabel = "Patient";
     private String recordingIdentificationLabel = "Record";
     private String spsLabel = "Sampling Frequency (Hz)";
-    private String comPortLabel = "Com Port";
 
     private String channelsPanelLabel = "Channel";
     private String identificationPanelLabel ="Identification";
@@ -28,7 +27,6 @@ public class DeviceSettings extends JDialog  {
     private String FILENAME_PATTERN = "Date-Time";
 
     private JComboBox spsField;
-    private JComboBox comPort;
     private JComboBox[] channelFrequency;
     private JComboBox[] channelGain;
     private JComboBox[] channelCommutatorState;
@@ -47,6 +45,8 @@ public class DeviceSettings extends JDialog  {
     private JTextField filename;
     private DirectoryField directory;
 
+    private JComponent comPort_UI;
+
     private String title = "Recorder Configuration";
     private JComponent[] channelsHeaders = {new JLabel("Number"), new JLabel("Enable"), new JLabel("Name"), new JLabel("Frequency (Hz)"),
             new JLabel("Gain"), new JLabel("Commutator State")};
@@ -56,11 +56,12 @@ public class DeviceSettings extends JDialog  {
     private GuiConfig guiConfig;
 
 
-    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler, GuiConfig guiConfig) throws ApplicationException {
+    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler, GuiConfig guiConfig, JComponent comPort_UI) throws ApplicationException {
         super(parent, Dialog.ModalityType.APPLICATION_MODAL);
         deviceConfig = eventHandler.getDeviceConfig();
         this.eventHandler = eventHandler;
         this.guiConfig = guiConfig;
+        this.comPort_UI = comPort_UI;
         init();
         arrangeForm();
         setActions();
@@ -72,7 +73,6 @@ public class DeviceSettings extends JDialog  {
     private void init() {
         int adsChannelsNumber = deviceConfig.getNumberOfAdsChannels();
         spsField = new JComboBox(Sps.values());
-        comPort = new JComboBox(eventHandler.getComPortNames());
 
         int fieldLength = 20;
         patientIdentification = new JTextField(fieldLength);
@@ -219,8 +219,7 @@ public class DeviceSettings extends JDialog  {
         spsPanel.add(spsField);
 
         JPanel comPortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
-        comPortPanel.add(new Label(comPortLabel));
-        comPortPanel.add(comPort);
+        comPortPanel.add(comPort_UI);
 
         hgap = 60;
         vgap = 15;
@@ -346,7 +345,6 @@ public class DeviceSettings extends JDialog  {
 
     private void loadDataFromModel() {
         spsField.setSelectedItem(deviceConfig.getSps());
-        comPort.setSelectedItem(deviceConfig.getComPortName());
         filename.setText(FILENAME_PATTERN);
         patientIdentification.setText("Default patient");
         recordingIdentification.setText("Default record");
@@ -372,7 +370,6 @@ public class DeviceSettings extends JDialog  {
 
     private void saveDataToModel() {
         deviceConfig.setSps(getSps());
-        deviceConfig.setComPortName(getComPort());
         for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
             deviceConfig.setChannelDivider(i, getChannelDivider(i));
             deviceConfig.setChannelEnabled(i, isChannelEnable(i));
@@ -472,9 +469,6 @@ public class DeviceSettings extends JDialog  {
         return channelName[channelNumber].getText();
     }
 
-    private String getComPort() {
-        return (String) comPort.getSelectedItem();
-    }
 
     private String getPatientIdentification() {
         return patientIdentification.getText();

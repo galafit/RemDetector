@@ -23,13 +23,15 @@ public class MainWindow extends JFrame {
     protected GraphViewer graphViewer;
     private JToolBar menu = new JToolBar();
     private JDialog deviceSettings;
+    JComponent comPort_UI;
 
     private GuiConfig guiConfig;
     private InputEventHandler eventHandler;
 
-    public MainWindow(InputEventHandler eventHandler, GuiConfig guiConfig) {
+    public MainWindow(InputEventHandler eventHandler, GuiConfig guiConfig, JComponent comPort_UI) {
         this.eventHandler = eventHandler;
         this.guiConfig = guiConfig;
+        this.comPort_UI = comPort_UI;
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -116,7 +118,7 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler, guiConfig);
+                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler, guiConfig, comPort_UI);
                 } catch (ApplicationException ex) {
                     showMessage(ex.getMessage());
                 }

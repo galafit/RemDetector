@@ -10,6 +10,7 @@ public abstract class Function implements DataSeries {
     protected DataSeries inputData;
 
 
+
     protected Function(DataSeries inputData) {
         this.inputData = inputData;
     }
