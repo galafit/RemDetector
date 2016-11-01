@@ -32,7 +32,6 @@ public class PropertiesServiceLocator implements ServiceLocator {
             throw new ApplicationException("Device Configuration file is not specified");
         }
         //return new AdsConfigurationProperties(appProperties.getDeviceConfigFileName());
-
         return new AdsConfigurationProperties( new File(appProperties.getDeviceConfigFileName()));
     }
 

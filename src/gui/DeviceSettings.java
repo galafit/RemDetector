@@ -1,14 +1,20 @@
 package gui;
 
+import comport.ComportFacade;
 import device.general.*;
 import dreamrec.ApplicationException;
 import dreamrec.InputEventHandler;
+import gui.comport_gui.ComPortModelMock;
+import gui.comport_gui.ComportUI;
+import gui.file_gui.DirectoryField;
+import gui.file_gui.FileToSaveUI;
 import gui.layouts.TableLayout;
 import gui.layouts.TableOption;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -22,9 +28,6 @@ public class DeviceSettings extends JDialog  {
 
     private String channelsPanelLabel = "Channel";
     private String identificationPanelLabel ="Identification";
-    private String saveAsPanelLabel = "SaveAs";
-    private String filenameLabel = "Filename";
-    private String FILENAME_PATTERN = "Date-Time";
 
     private JComboBox spsField;
     private JComboBox[] channelFrequency;
@@ -42,10 +45,9 @@ public class DeviceSettings extends JDialog  {
     private JButton stopButton = new JButton("Stop");
     private JButton cancelButton = new JButton("Cancel");
 
-    private JTextField filename;
-    private DirectoryField directory;
+    private FileToSaveUI fileToSaveUI;
+    private ComportUI comportUI;
 
-    private JComponent comPort_UI;
 
     private String title = "Recorder Configuration";
     private JComponent[] channelsHeaders = {new JLabel("Number"), new JLabel("Enable"), new JLabel("Name"), new JLabel("Frequency (Hz)"),
@@ -56,12 +58,12 @@ public class DeviceSettings extends JDialog  {
     private GuiConfig guiConfig;
 
 
-    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler, GuiConfig guiConfig, JComponent comPort_UI) throws ApplicationException {
+    public DeviceSettings(JFrame parent,  InputEventHandler eventHandler, GuiConfig guiConfig) throws ApplicationException {
         super(parent, Dialog.ModalityType.APPLICATION_MODAL);
         deviceConfig = eventHandler.getDeviceConfig();
         this.eventHandler = eventHandler;
         this.guiConfig = guiConfig;
-        this.comPort_UI = comPort_UI;
+
         init();
         arrangeForm();
         setActions();
@@ -73,18 +75,14 @@ public class DeviceSettings extends JDialog  {
     private void init() {
         int adsChannelsNumber = deviceConfig.getNumberOfAdsChannels();
         spsField = new JComboBox(Sps.values());
+        comportUI = new ComportUI(new ComportFacade());
+        fileToSaveUI = new FileToSaveUI();
+        fileToSaveUI.setDirectory(guiConfig.getDefaultDirectoryToSave());
 
         int fieldLength = 20;
         patientIdentification = new JTextField(fieldLength);
         fieldLength = 30;
         recordingIdentification = new JTextField(fieldLength);
-
-        fieldLength = 20;
-        filename = new JTextField(fieldLength);
-
-        fieldLength = 50;
-        directory = new DirectoryField(guiConfig.getDirectoryToSave());
-        directory.setLength(fieldLength);
 
         channelFrequency = new JComboBox[adsChannelsNumber];
         channelGain = new JComboBox[adsChannelsNumber];
@@ -140,10 +138,10 @@ public class DeviceSettings extends JDialog  {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
+                saveDataToModel();
                 dispose();
             }
         });
-
 
 
         for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
@@ -190,14 +188,6 @@ public class DeviceSettings extends JDialog  {
             }
         });
 
-        filename.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent focusEvent) {
-                filename.selectAll();
-            }
-        });
-
-
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -219,7 +209,7 @@ public class DeviceSettings extends JDialog  {
         spsPanel.add(spsField);
 
         JPanel comPortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
-        comPortPanel.add(comPort_UI);
+        comPortPanel.add(comportUI);
 
         hgap = 60;
         vgap = 15;
@@ -276,27 +266,12 @@ public class DeviceSettings extends JDialog  {
         identificationBorderPanel.add(identificationPanel);
 
 
-        hgap = 5;
-        vgap = 0;
-        JPanel saveAsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
-        saveAsPanel.add(new JLabel(filenameLabel));
-        saveAsPanel.add(filename);
-        saveAsPanel.add(new JLabel("  "));
-        saveAsPanel.add(directory);
-
-        hgap = 15;
-        vgap = 5;
-        JPanel saveAsBorderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
-        saveAsBorderPanel.setBorder(BorderFactory.createTitledBorder(saveAsPanelLabel));
-        saveAsBorderPanel.add(saveAsPanel);
-
-
         hgap = 0;
         vgap = 5;
         JPanel adsPanel = new JPanel(new BorderLayout(hgap, vgap));
         adsPanel.add(channelsPanel, BorderLayout.NORTH);
         adsPanel.add(identificationBorderPanel, BorderLayout.CENTER);
-        adsPanel.add(saveAsBorderPanel, BorderLayout.SOUTH);
+        adsPanel.add(fileToSaveUI, BorderLayout.SOUTH);
 
         hgap = 10;
         vgap = 10;
@@ -311,10 +286,10 @@ public class DeviceSettings extends JDialog  {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // set the same size for identificationPanel and  saveAsPanel
-        int height = Math.max(identificationPanel.getPreferredSize().height, saveAsPanel.getPreferredSize().height);
-        int width = Math.max(identificationPanel.getPreferredSize().width, saveAsPanel.getPreferredSize().width);
-        saveAsPanel.setPreferredSize(new Dimension(width, height));
-        identificationPanel.setPreferredSize(new Dimension(width, height));
+        int height = Math.max(identificationBorderPanel.getPreferredSize().height, fileToSaveUI.getPreferredSize().height);
+        int width = Math.max(identificationBorderPanel.getPreferredSize().width, fileToSaveUI.getPreferredSize().width);
+        fileToSaveUI.setPreferredSize(new Dimension(width, height));
+        identificationBorderPanel.setPreferredSize(new Dimension(width, height));
 
 
         pack();
@@ -326,8 +301,7 @@ public class DeviceSettings extends JDialog  {
         spsField.setEnabled(isEnable);
         patientIdentification.setEnabled(isEnable);
         recordingIdentification.setEnabled(isEnable);
-        filename.setEnabled(isEnable);
-        directory.setEditable(isEnable);
+        fileToSaveUI.setEnabled(isEnable);
 
         accelerometerName.setEnabled(isEnable);
         accelerometerEnable.setEnabled(isEnable);
@@ -345,7 +319,7 @@ public class DeviceSettings extends JDialog  {
 
     private void loadDataFromModel() {
         spsField.setSelectedItem(deviceConfig.getSps());
-        filename.setText(FILENAME_PATTERN);
+        comportUI.setCurrentPort(deviceConfig.getComPortName());
         patientIdentification.setText("Default patient");
         recordingIdentification.setText("Default record");
         int numberOfAdsChannels = deviceConfig.getNumberOfAdsChannels();
@@ -370,6 +344,7 @@ public class DeviceSettings extends JDialog  {
 
     private void saveDataToModel() {
         deviceConfig.setSps(getSps());
+        deviceConfig.setComPortName(getComPortName());
         for (int i = 0; i < deviceConfig.getNumberOfAdsChannels(); i++) {
             deviceConfig.setChannelDivider(i, getChannelDivider(i));
             deviceConfig.setChannelEnabled(i, isChannelEnable(i));
@@ -380,7 +355,8 @@ public class DeviceSettings extends JDialog  {
         deviceConfig.setAccelerometerEnabled(isAccelerometerEnable());
         deviceConfig.setAccelerometerDivider(getAccelerometerDivider());
         deviceConfig.save();
-        guiConfig.setDirectoryToSave(getDirectory());
+        guiConfig.setDefaultDirectoryToSave(getDirectory());
+
     }
 
     private void setChannelsFrequencies(Sps sps) {
@@ -401,6 +377,10 @@ public class DeviceSettings extends JDialog  {
             // put the size if field   accelerometerFrequency equal to the size of fields  channelFrequency
             accelerometerFrequency.setPreferredSize(channelFrequency[0].getPreferredSize());
         }
+    }
+
+    private String getComPortName() {
+        return comportUI.getComPortName();
     }
 
     private void setChannelsGain(){
@@ -491,14 +471,11 @@ public class DeviceSettings extends JDialog  {
     }
 
     private String getFilename() {
-        if(!FILENAME_PATTERN.equals(filename.getText())){
-            return filename.getText();
-        }
-        return null;
+        return fileToSaveUI.getFilename();
     }
 
     private String getDirectory() {
-        return directory.getDirectory();
+        return fileToSaveUI.getDirectory();
     }
 
 

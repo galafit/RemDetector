@@ -41,6 +41,8 @@ public class AdsConfigurationProperties implements AdsConfiguration {
     public AdsConfigurationProperties(File propertiesFile) {
         try {
             config = new PropertiesConfiguration(propertiesFile);
+            config.setAutoSave(false);
+
         } catch (ConfigurationException e) {
             log.error(e);
         }
@@ -106,6 +108,7 @@ public class AdsConfigurationProperties implements AdsConfiguration {
 
     public void setComPortName(String comPortName) {
         config.setProperty(COM_PORT_NAME, comPortName);
+        save();
     }
 
     public Sps getSps() {

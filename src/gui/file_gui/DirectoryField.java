@@ -1,4 +1,4 @@
-package gui;
+package gui.file_gui;
 
 import com.sun.istack.internal.Nullable;
 
@@ -14,23 +14,9 @@ import java.io.File;
 public class DirectoryField extends JComboBox{
     JFileChooser fileChooser = new JFileChooser();
 
-    public DirectoryField() { this(null); }
-
-    public DirectoryField(@Nullable File root) {
-        String rootString;
-        if(root == null) {
-            root = new File(System.getProperty("user.home"));
-            rootString = System.getProperty("user.home");
-        }
-        else if(root.isFile()) {
-            rootString = root.getParent();
-        }
-       else {
-            rootString = root.getPath();
-        }
-        addItem(rootString);
-        setSelectedItem(rootString);
-        fileChooser = new JFileChooser(root);
+    public DirectoryField() {
+        String homeDir = System.getProperty("user.home");
+        fileChooser = new JFileChooser(new File(homeDir));
         fileChooser.setDialogTitle("Specify a directory to save");
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -45,11 +31,11 @@ public class DirectoryField extends JComboBox{
                 return "Directories";
             }
         });
-        addItem(root);
+
         for (Component component : getComponents()) {
             // cancel the popup menu opening from MouseClicks
             for (MouseListener listener : component.getMouseListeners()) {
-                 component.removeMouseListener(listener);
+                component.removeMouseListener(listener);
 
             }
             // instead open JFileChooser
@@ -66,16 +52,41 @@ public class DirectoryField extends JComboBox{
                     }
                 }
             });
+
         }
 
         // disable the popup menu opening from Key-Event Alt-Down
         // which opens the popup menu even if remove all the key listeners and clear the action map
         setFocusable(false);
+        setDirectory(homeDir);
     }
 
-    public String getDirectory() {
-        return getSelectedItem().toString();
+    public DirectoryField(String dirName) {
+        this();
+        setDirectory(dirName);
+    }
 
+
+
+    public void setDirectory(String dirName) {
+        File directory = new File(dirName);
+        if(directory.isFile()) {
+            dirName = directory.getParent();
+        }
+        else {
+            dirName = directory.getPath();
+        }
+        addItem(dirName);
+        setSelectedItem(dirName);
+        fileChooser.setCurrentDirectory(new File(dirName));
+    }
+
+
+    public String getDirectory() {
+        if(getSelectedItem()!= null) {
+            return getSelectedItem().toString();
+        }
+        return null;
     }
 
     public void setLength(int length) {

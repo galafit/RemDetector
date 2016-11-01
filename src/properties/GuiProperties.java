@@ -29,35 +29,36 @@ public class GuiProperties implements GuiConfig {
     }
 
     @Override
-    public File getDirectoryToSave() {
+    public String getDefaultDirectoryToSave() {
         String dir = config.getString(DIRECTORY_TO_SAVE);
         if(dir != null && !dir.isEmpty()) {
-            return new File(dir);
+            return dir;
         }
         return null;
     }
 
     @Override
-    public File getDirectoryToRead() {
+    public String getDefaultDirectoryToRead() {
         String dir = config.getString(DIRECTORY_TO_READ);
         if(dir != null && !dir.isEmpty()) {
-            return new File(dir);
+            return dir;
         }
         return null;
     }
 
     @Override
-    public void setDirectoryToSave(String directory) {
+    public void setDefaultDirectoryToSave(String directory) {
         if (directory != null) {
             config.setProperty(DIRECTORY_TO_SAVE, directory);
         }
     }
 
     @Override
-    public void setDirectoryToRead(String directory) {
+    public void setDefaultDirectoryToRead(String directory) {
         if (directory != null) {
             config.setProperty(DIRECTORY_TO_READ, directory);
         }
+
     }
 
 }

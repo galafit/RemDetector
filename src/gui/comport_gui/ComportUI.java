@@ -4,68 +4,69 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Created by gala on 29/10/16.
  */
 public class ComportUI extends JPanel {
-    private ComportModelInterface comportModel;
+    private ComportModel comportModel;
     private JComboBox comPort;
     private String labelText = "ComPort:  ";
+    private String currentComPort;
 
 
-    public ComportUI(ComportModelInterface comportModel) {
+    public ComportUI(ComportModel comportModel) {
         this.comportModel = comportModel;
         int hgap = 0;
         int vgap = 0;
         setLayout(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
-        if(comportModel.getCurrentComport() != null) {
-            JLabel comportName = new JLabel(labelText +comportModel.getCurrentComport());
-            add(comportName);
-        }
-        else {
-            add(new Label(labelText));
-            comPort = new JComboBox();
-            updateComPortNames();
-            comPort.addPopupMenuListener(new PopupMenuListener() {
-                @Override
-                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                    updateComPortNames();
-                }
 
-                @Override
-                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        comPort = new JComboBox();
 
-                }
+// чтобы отследить подключение новых приборов каждый раз при открытии ComboBox
+// обновляется  список всех доступных портов
+        comPort.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                loadData();
+            }
 
-                @Override
-                public void popupMenuCanceled(PopupMenuEvent e) {
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 
-                }
-            });
-            comPort.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    saveComPortName();
+            }
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
 
-                }
-            });
-            add(comPort);
-        }
+            }
+        });
 
+        add(new Label(labelText));
+        add(comPort);
+
+        loadData();
     }
 
-    private void saveComPortName() {
-        String comPortName = (String) comPort.getSelectedItem();
-        comportModel.setComPort(comPortName);
+    public void setCurrentPort(String comPortName) {
+        currentComPort = comPortName;
+        loadData();
     }
 
-    private void updateComPortNames() {
+    public String getComPortName() {
+        return (String) comPort.getSelectedItem();
+    }
+
+
+    private void loadData() {
         DefaultComboBoxModel model = new DefaultComboBoxModel(comportModel.getAvailableComports());
         comPort.setModel( model );
+        if(currentComPort != null){
+            comPort.setSelectedItem(currentComPort);
+        }
+    }
 
-
+    @Override
+    public void setEnabled(boolean isEnabled) {
+        comPort.setEnabled(isEnabled);
     }
 }

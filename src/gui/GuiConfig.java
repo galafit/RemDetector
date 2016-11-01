@@ -3,8 +3,8 @@ package gui;
 import java.io.File;
 
 public interface GuiConfig {
-    public File getDirectoryToSave();
-    public File getDirectoryToRead();
-    public void setDirectoryToSave(String directory);
-    public void setDirectoryToRead(String directory);
+    public String getDefaultDirectoryToSave();
+    public String getDefaultDirectoryToRead();
+    public void setDefaultDirectoryToSave(String directory);
+    public void setDefaultDirectoryToRead(String directory);
 }

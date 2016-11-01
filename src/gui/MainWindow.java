@@ -22,16 +22,13 @@ public class MainWindow extends JFrame {
 
     protected GraphViewer graphViewer;
     private JToolBar menu = new JToolBar();
-    private JDialog deviceSettings;
-    JComponent comPort_UI;
 
     private GuiConfig guiConfig;
     private InputEventHandler eventHandler;
 
-    public MainWindow(InputEventHandler eventHandler, GuiConfig guiConfig, JComponent comPort_UI) {
+    public MainWindow(InputEventHandler eventHandler, GuiConfig guiConfig) {
         this.eventHandler = eventHandler;
         this.guiConfig = guiConfig;
-        this.comPort_UI = comPort_UI;
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -118,7 +115,7 @@ public class MainWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    deviceSettings = new DeviceSettings(MainWindow.this, eventHandler, guiConfig, comPort_UI);
+                    new DeviceSettings(MainWindow.this, eventHandler, guiConfig);
                 } catch (ApplicationException ex) {
                     showMessage(ex.getMessage());
                 }
@@ -136,12 +133,12 @@ public class MainWindow extends JFrame {
             extensionDescription = extensionDescription.concat(", ").concat(fileExtensions[i]);
         }
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(guiConfig.getDirectoryToRead());
+        fileChooser.setCurrentDirectory(new File(guiConfig.getDefaultDirectoryToRead()));
         fileChooser.setFileFilter(new FileNameExtensionFilter(extensionDescription, fileExtensions));
         int fileChooserState = fileChooser.showOpenDialog(this);
         if (fileChooserState == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            guiConfig.setDirectoryToRead(file.getParent());
+            guiConfig.setDefaultDirectoryToRead(file.getParent());
             return file;
         }
         return null;
