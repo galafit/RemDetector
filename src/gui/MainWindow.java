@@ -133,7 +133,9 @@ public class MainWindow extends JFrame {
             extensionDescription = extensionDescription.concat(", ").concat(fileExtensions[i]);
         }
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(guiConfig.getDefaultDirectoryToRead()));
+        if(guiConfig.getDefaultDirectoryToRead() != null) {
+            fileChooser.setCurrentDirectory(new File(guiConfig.getDefaultDirectoryToRead()));
+        }
         fileChooser.setFileFilter(new FileNameExtensionFilter(extensionDescription, fileExtensions));
         int fileChooserState = fileChooser.showOpenDialog(this);
         if (fileChooserState == JFileChooser.APPROVE_OPTION) {

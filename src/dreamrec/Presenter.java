@@ -87,7 +87,6 @@ public class Presenter implements  ControllerListener {
         DataSeries accMovement = remDataStore.getAccMovementData();
         DataSeries isSleep = remDataStore.isSleep();
 
-        double accMovementLimit = remDataStore.getAccMovementLimit();
 
         FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogFull);
         DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
@@ -97,7 +96,7 @@ public class Presenter implements  ControllerListener {
 
         graphViewer.addGraphPanel(1, false);
         graphViewer.addGraph(accMovement);
-        graphViewer.addGraph(new Constant(accMovement, accMovementLimit));
+        graphViewer.addGraph(new Constant(accMovement, remDataStore.getAccMovementLimit()));
 
         graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);

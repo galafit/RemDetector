@@ -11,6 +11,7 @@ import prefilters.PreFilterAdapter;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -133,16 +134,23 @@ public class DataStore implements BdfListener {
 
 
     public void setStartTime(final long time) {
-        SwingUtilities.invokeLater(new Runnable() {
+        for (int i = 0; i < channelsList.length; i++) {
+            ScalingImpl scaling = (ScalingImpl) channelsList[i].getScaling();
+            scaling.setStart(time);
+
+        }
+       // DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+       // System.out.println("start = "+dateFormat.format(new Date(getStartTime())));
+       /*  SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 for (int i = 0; i < channelsList.length; i++) {
                     ScalingImpl scaling = (ScalingImpl) channelsList[i].getScaling();
                     scaling.setStart(time);
-                }
 
+                 }
             }
-        });
+        });*/
     }
 
     public void addListener(DataStoreListener dataStoreListener) {

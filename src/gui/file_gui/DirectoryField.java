@@ -69,16 +69,19 @@ public class DirectoryField extends JComboBox{
 
 
     public void setDirectory(String dirName) {
-        File directory = new File(dirName);
-        if(directory.isFile()) {
-            dirName = directory.getParent();
+        if(dirName!=null) {
+            File directory = new File(dirName);
+            if(directory.isFile()) {
+                dirName = directory.getParent();
+            }
+            else {
+                dirName = directory.getPath();
+            }
+            addItem(dirName);
+            setSelectedItem(dirName);
+            fileChooser.setCurrentDirectory(new File(dirName));
         }
-        else {
-            dirName = directory.getPath();
-        }
-        addItem(dirName);
-        setSelectedItem(dirName);
-        fileChooser.setCurrentDirectory(new File(dirName));
+
     }
 
 

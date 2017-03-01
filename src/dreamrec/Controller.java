@@ -7,6 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,7 +66,6 @@ public class  Controller  implements InputEventHandler {
         bdfHeaderData.setRecordingIdentification(bdfHeaderDataNew.getRecordingIdentification());
         bdfHeaderData.setSignalsLabels(bdfHeaderDataNew.getSignalsLabels());
         BdfHeaderWriter.writeBdfHeader(bdfHeaderDataNew, file);
-
         if (isRemMode) {
             RemChannels remChannels = new RemChannels(bdfHeaderData.getSignalsLabels());
             RemDataStore dataStore  = new RemDataStore(bdfProvider, remChannels);
@@ -75,10 +75,10 @@ public class  Controller  implements InputEventHandler {
             fireDataStoreUpdated(dataStore);
 
         } else {
-            DataStore dataStore = new DataStore(bdfProvider);
+           /* DataStore dataStore = new DataStore(bdfProvider);
             dataStore.setStartTime(bdfHeaderData.getStartTime());
 
-            fireDataStoreUpdated(dataStore);
+            fireDataStoreUpdated(dataStore);*/
         }
 
         bdfProvider.startReading();

@@ -179,7 +179,8 @@ public DataSeries isSleep() {
             isNotMove.setSamplingInterval(samplingInterval);
             isSleep.add(isEogOk());
             isSleep.add(isNotMove);
-            return isSleep;
+            //return isSleep;
+            return isNotMove;
         } catch (ApplicationException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
