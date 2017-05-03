@@ -15,7 +15,7 @@ public class BdfReader implements BdfProvider {
     private static final Log log = LogFactory.getLog(BdfReader.class);
     private BufferedInputStream fileInputStream;
     private BdfHeaderData bdfHeaderData;
-    private int BUFFER_SIZE = 64 * 1028; // It is best to use buffer sizes that are multiples of 1024 bytes
+    private int BUFFER_SIZE = 6 * 1028; // It is best to use buffer sizes that are multiples of 1024 bytes
     private boolean isFileOpen = false;
     private int totalNumberOfSamplesInEachDataRecord;
 

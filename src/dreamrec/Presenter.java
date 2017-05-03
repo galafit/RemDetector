@@ -2,7 +2,9 @@ package dreamrec;
 
 import data.CompressionType;
 import data.DataSeries;
+import filters.FilterBandPass_Alfa;
 import filters.FilterDerivativeRem;
+import filters.FilterHiPass;
 import filters.HiPassCollectingFilter;
 import functions.Abs;
 import functions.Constant;
@@ -91,8 +93,12 @@ public class Presenter implements  ControllerListener {
         FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogFull);
         DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
 
-        graphViewer.addGraphPanel(2, true);
+        graphViewer.addGraphPanel(3, true);
         graphViewer.addGraph(eog);
+
+        DataSeries alfa = new FilterHiPass(new FilterBandPass_Alfa(eogFull), 2);
+        graphViewer.addGraphPanel(2, true);
+        graphViewer.addGraph(alfa);
 
         graphViewer.addGraphPanel(1, false);
         graphViewer.addGraph(accMovement);

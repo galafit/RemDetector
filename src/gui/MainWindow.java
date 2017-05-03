@@ -121,8 +121,6 @@ public class MainWindow extends JFrame {
                 }
             }
         });
-
-
         add(menu, BorderLayout.NORTH);
     }
 
