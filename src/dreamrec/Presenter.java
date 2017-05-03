@@ -8,6 +8,7 @@ import filters.FilterHiPass;
 import filters.HiPassCollectingFilter;
 import functions.Abs;
 import functions.Constant;
+import functions.Minus;
 import graph.Graph;
 import graph.GraphType;
 import graph.GraphViewer;
@@ -84,25 +85,37 @@ public class Presenter implements  ControllerListener {
 
     private void rem(RemDataStore remDataStore) {
         int eogCutOffPeriod = 10; //sec. to remove steady component (cutoff_frequency = 1/cutoff_period )
-        DataSeries eogFull = remDataStore.getEogData();
-        DataSeries eog = new HiPassCollectingFilter(eogFull, eogCutOffPeriod);
+        DataSeries eog1Full = remDataStore.getEog1Data();
+        DataSeries eog2Full = remDataStore.getEog2Data();
+        DataSeries eog1 = new HiPassCollectingFilter(eog1Full, eogCutOffPeriod);
+        DataSeries eog2 = null;
+        if(eog2Full != null) {
+            eog2 =  new HiPassCollectingFilter(eog2Full, eogCutOffPeriod);
+        }
         DataSeries accMovement = remDataStore.getAccMovementData();
         DataSeries isSleep = remDataStore.isSleep();
 
-
-        FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogFull);
-        DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
-
         graphViewer.addGraphPanel(3, true);
-        graphViewer.addGraph(eog);
+        graphViewer.addGraph(eog1);
+        if(eog2 != null) {
+            graphViewer.addGraph(eog2);
+        }
 
-        DataSeries alfa = new FilterHiPass(new FilterBandPass_Alfa(eogFull), 2);
+        DataSeries alfa = new FilterHiPass(new FilterBandPass_Alfa(eog1Full), 2);
         graphViewer.addGraphPanel(2, true);
         graphViewer.addGraph(alfa);
 
         graphViewer.addGraphPanel(1, false);
         graphViewer.addGraph(accMovement);
         graphViewer.addGraph(new Constant(accMovement, remDataStore.getAccMovementLimit()));
+
+
+        DataSeries eogDiff = eog1Full;
+        if(eog2Full != null) {
+            eogDiff = new Minus(eog1Full, eog2Full);
+        }
+        FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogDiff);
+        DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
 
         graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
@@ -114,7 +127,7 @@ public class Presenter implements  ControllerListener {
 
     private void sasha(RemDataStore remDataStore) {
         int eogCutOffPeriod = 10; //sec. to remove steady component (cutoff_frequency = 1/cutoff_period )
-        DataSeries eogFull = remDataStore.getEogData();
+        DataSeries eogFull = remDataStore.getEog1Data();
         DataSeries eog = new HiPassCollectingFilter(eogFull, eogCutOffPeriod);
         DataSeries accMovement = remDataStore.getAccMovementData();
         DataSeries isSleep = remDataStore.isSleep();

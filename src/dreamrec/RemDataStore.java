@@ -32,7 +32,11 @@ public class RemDataStore  implements DataStoreListener {
         dataStore = new DataStore(bdfProvider);
         dataStore.addListener(this);
         int numberOfSignals = bdfProvider.getBdfConfig().getSignalConfigs().length;
-        if(remChannels.getEog() >= numberOfSignals) {
+        if(remChannels.getEog1() >= numberOfSignals) {
+            String msg = "EOG channel number should be less then total number of channels";
+            throw new ApplicationException(msg);
+        }
+        if(remChannels.getEog2() >= numberOfSignals) {
             String msg = "EOG channel number should be less then total number of channels";
             throw new ApplicationException(msg);
         }
@@ -51,7 +55,7 @@ public class RemDataStore  implements DataStoreListener {
     }
 
     public void setChannelsMask(boolean[] channelsMask) throws ApplicationException {
-        if((remChannels.getEog() < channelsMask.length) && channelsMask[remChannels.getEog()] == false) {
+        if((remChannels.getEog1() < channelsMask.length) && channelsMask[remChannels.getEog1()] == false) {
             String errorMsg = "EOG channel should be enable";
             throw new ApplicationException(errorMsg);
         }
@@ -123,8 +127,15 @@ public class RemDataStore  implements DataStoreListener {
         fireDataUpdated();
     }
 
-    public DataSeries getEogData() {
-        return dataStore.getSignalData(remChannels.getEog());
+    public DataSeries getEog1Data() {
+        return dataStore.getSignalData(remChannels.getEog1());
+    }
+
+    public DataSeries getEog2Data() {
+        if(remChannels.getEog2() >= 0) {
+            return dataStore.getSignalData(remChannels.getEog2());
+        }
+        return null;
     }
 
 
@@ -164,7 +175,7 @@ public class RemDataStore  implements DataStoreListener {
     }
 
     private DataSeries isEogOk() {
-        FilterDerivativeRem derivativeRem = new FilterDerivativeRem(getEogData());
+        FilterDerivativeRem derivativeRem = new FilterDerivativeRem(getEog1Data());
         return new Trigger(derivativeRem, 400);
     }
 
