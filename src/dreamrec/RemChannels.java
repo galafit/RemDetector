@@ -6,12 +6,14 @@ public class RemChannels {
     private int accelerometerZ = -1;
     private int eog1 = -1;
     private int eog2 = -1;
+    private int eeg = -1;
     private boolean[] remActiveChannels;
 
 
     private static final String EOG = "EOG";
     private static final String EOG_1 = "EOG1";
     private static final String EOG_2 = "EOG2";
+    private static final String EEG = "EEG";
     private static final String ACCELEROMETER_X = "Accelerometer X";
     private static final String ACCELEROMETER_Y = "Accelerometer Y";
     private static final String ACCELEROMETER_Z = "Accelerometer Z";
@@ -23,6 +25,10 @@ public class RemChannels {
     public RemChannels(String[] signalsLabels) throws ApplicationException{
         remActiveChannels = new boolean[signalsLabels.length];
         for (int i = 0; i < signalsLabels.length; i++) {
+            if (signalsLabels[i].equals(EEG)) {
+                eeg = i;
+                remActiveChannels[i] = true;
+            }
             if (signalsLabels[i].equals(EOG)) {
                 eog1 = i;
                 remActiveChannels[i] = true;
@@ -97,6 +103,10 @@ public class RemChannels {
 
     public int getEog2() {
         return eog2;
+    }
+
+    public int getEeg() {
+        return eeg;
     }
 
     public boolean[] getRemActiveChannels() {

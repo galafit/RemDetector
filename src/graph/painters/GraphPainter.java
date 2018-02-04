@@ -27,6 +27,7 @@ public class GraphPainter {
             int value = graphData.get(startIndex);
             int y = (int) Math.round(zoom * value);
             VerticalLine vLine = new VerticalLine(y);
+
             for (int x = 0; x < endPoint; x++) {
                 value = graphData.get(x + startIndex);
                 y = (int) Math.round(zoom * value);

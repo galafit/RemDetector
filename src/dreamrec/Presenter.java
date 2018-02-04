@@ -87,8 +87,13 @@ public class Presenter implements  ControllerListener {
         int eogCutOffPeriod = 10; //sec. to remove steady component (cutoff_frequency = 1/cutoff_period )
         DataSeries eog1Full = remDataStore.getEog1Data();
         DataSeries eog2Full = remDataStore.getEog2Data();
+        DataSeries eegFull = remDataStore.getEegData();
         DataSeries eog1 = new HiPassCollectingFilter(eog1Full, eogCutOffPeriod);
         DataSeries eog2 = null;
+        DataSeries eeg = null;
+        if(eegFull != null) {
+            eeg =  new HiPassCollectingFilter(eegFull, eogCutOffPeriod);
+        }
         if(eog2Full != null) {
             eog2 =  new HiPassCollectingFilter(eog2Full, eogCutOffPeriod);
         }
@@ -99,6 +104,11 @@ public class Presenter implements  ControllerListener {
         graphViewer.addGraph(eog1);
         if(eog2 != null) {
             graphViewer.addGraph(eog2);
+        }
+
+        if(eeg != null) {
+            graphViewer.addGraphPanel(3, true);
+            graphViewer.addGraph(eeg);
         }
 
         DataSeries alfa = new FilterHiPass(new FilterBandPass_Alfa(eog1Full), 2);
@@ -120,7 +130,6 @@ public class Presenter implements  ControllerListener {
         graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
         graphViewer.addPreview(isSleep, GraphType.BOOLEAN, CompressionType.BOOLEAN);
-
     }
 
 
@@ -153,7 +162,6 @@ public class Presenter implements  ControllerListener {
         graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
         graphViewer.addPreview(isSleep, GraphType.BOOLEAN, CompressionType.BOOLEAN);
-
     }
 
 }

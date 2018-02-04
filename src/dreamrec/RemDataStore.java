@@ -127,6 +127,15 @@ public class RemDataStore  implements DataStoreListener {
         fireDataUpdated();
     }
 
+    public DataSeries getEegData() {
+        if(remChannels.getEeg() >= 0) {
+            return dataStore.getSignalData(remChannels.getEeg());
+        }
+        return null;
+
+    }
+
+
     public DataSeries getEog1Data() {
         return dataStore.getSignalData(remChannels.getEog1());
     }

@@ -57,7 +57,7 @@ public class RemConfigurator {
         int[] frequencies = BdfNormalizer.getNormalizedSignalsFrequencies(bdfConfig);
         PreFilter[] preFilters = new PreFilter[frequencies.length];
         for(int i = 0; i < preFilters.length; i++) {
-            if(eogRemFrequency != 0 && (i == remChannels.getEog1() || i == remChannels.getEog2())) {
+            if(eogRemFrequency != 0 && (i == remChannels.getEog1() || i == remChannels.getEog2() || i == remChannels.getEeg())) {
                 if ((frequencies[i] % eogRemFrequency) == 0) {
                     int divider = frequencies[i] / eogRemFrequency;
                     if(divider > 1) {
