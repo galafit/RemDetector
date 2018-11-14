@@ -5,17 +5,17 @@ import java.util.List;
 
 public class SaccadesBatch {
     private static final int MIN_NUMBER_OF_SACCADES = 3;
-    private List<Saccade> saccadeList = new ArrayList<Saccade>();
+    private List<SaccadeOld> saccadeList = new ArrayList<SaccadeOld>();
     private int saccadeDistanceMaxPoints;
     private boolean isApproved = false;
 
-    public SaccadesBatch(Saccade saccade, int saccadeDistanceMaxPoints) {
+    public SaccadesBatch(SaccadeOld saccade, int saccadeDistanceMaxPoints) {
         saccadeList.add(saccade);
         this.saccadeDistanceMaxPoints = saccadeDistanceMaxPoints;
     }
 
-    public boolean addSaccade(Saccade saccade) {
-        Saccade lastSaccade = saccadeList.get(saccadeList.size() - 1);
+    public boolean addSaccade(SaccadeOld saccade) {
+        SaccadeOld lastSaccade = saccadeList.get(saccadeList.size() - 1);
         if(saccade.getBeginIndex() - lastSaccade.getEndIndex() < saccadeDistanceMaxPoints) {
             saccadeList.add(saccade);
             if (getNumberOfSaccades() >= MIN_NUMBER_OF_SACCADES){
@@ -34,7 +34,7 @@ public class SaccadesBatch {
         return saccadeList.size();
     }
 
-    public Saccade getSaccade(int saccadeNumber) {
+    public SaccadeOld getSaccade(int saccadeNumber) {
         return saccadeList.get(saccadeNumber);
     }
 

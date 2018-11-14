@@ -12,12 +12,10 @@ import functions.Minus;
 import graph.Graph;
 import graph.GraphType;
 import graph.GraphViewer;
-import graph.colors.MonoColorSelector;
 import graph.colors.TestColorSelector;
 import gui.MainWindow;
-import rem.SaccadeBatchDetector;
+import rem.saccade.SaccadeDetector;
 
-import java.awt.*;
 
 /**
  * Created by mac on 19/02/15.
@@ -63,7 +61,7 @@ public class Presenter implements  ControllerListener {
     }
 
     private void configureRemGraphViewer(RemDataStore remDataStore) {
-        rem(remDataStore);
+        sasha(remDataStore);
     }
 
     private void configureGraphViewer(DataStore dataStore) {
@@ -143,23 +141,34 @@ public class Presenter implements  ControllerListener {
 
         double accMovementLimit = remDataStore.getAccMovementLimit();
 
-
         FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogFull);
         //DataSeries eogDerivativeRem =  new FilterLowPass(new FilterDerivativeRem(eogFull), 25.0);
         DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
 
-        SaccadeBatchDetector saccades = new SaccadeBatchDetector(eogFull);
 
-        graphViewer.addGraphPanel(6, true);
+        SaccadeDetector saccades = new SaccadeDetector(eogFull, true);
+
+        graphViewer.addGraphPanel(4, true);
       //  graphViewer.addGraph(new Graph(isSleep, GraphType.BOOLEAN, new BooleanColorSelector(accMovement, accMovementLimit)), CompressionType.BOOLEAN, 0);
         graphViewer.addGraph(new Graph(eog, GraphType.VERTICAL_LINE, new TestColorSelector()), CompressionType.AVERAGE, 0);
 
 
-        graphViewer.addGraphPanel(2, false);
-        graphViewer.addGraph(new Graph(accMovement, GraphType.BAR, new MonoColorSelector(Color.DARK_GRAY.darker())),CompressionType.AVERAGE,1);
-        graphViewer.addGraph(new Constant(accMovement, accMovementLimit));
+        graphViewer.addGraphPanel(4, true);
+        graphViewer.addGraph(eogDerivativeRem);
+        graphViewer.addGraph(saccades.getThresholds());
 
-        graphViewer.addPreviewPanel(2, false);
+
+        graphViewer.addGraphPanel(3, false);
+        graphViewer.addGraph(saccades);
+
+
+
+//        graphViewer.addGraphPanel(2, false);
+//        graphViewer.addGraph(new Graph(accMovement, GraphType.BAR, new MonoColorSelector(Color.DARK_GRAY.darker())),CompressionType.AVERAGE,1);
+ //       graphViewer.addGraph(accMovement);
+  //      graphViewer.addGraph(new Constant(accMovement, accMovementLimit));
+
+        graphViewer.addPreviewPanel(4, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
         graphViewer.addPreview(isSleep, GraphType.BOOLEAN, CompressionType.BOOLEAN);
     }

@@ -8,7 +8,7 @@ import functions.Function;
  */
 
 public class FilterDerivativeRem extends Function {
-    private static final int DEFAULT_DISTANCE_MSEC = 120;
+    private static final int DEFAULT_DISTANCE_MS = 40;
     private int distance_point;
 
     public FilterDerivativeRem(DataSeries inputData, int timeMs) {
@@ -21,10 +21,11 @@ public class FilterDerivativeRem extends Function {
         if(distance_point== 0) {
             distance_point = 1;
         }
+        distance_point = 1;
     }
 
     public FilterDerivativeRem(DataSeries inputData) {
-       this(inputData, DEFAULT_DISTANCE_MSEC);
+       this(inputData, DEFAULT_DISTANCE_MS);
     }
 
     @Override

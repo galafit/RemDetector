@@ -2,9 +2,7 @@ package rem;
 
 import data.DataList;
 import data.DataSeries;
-import filters.FilterDerivative;
 import filters.FilterDerivativeRem;
-import filters.FilterDerivative_N;
 
 /**
  * Humans and many animals do not look at a scene in fixed steadiness and
@@ -68,7 +66,7 @@ import filters.FilterDerivative_N;
  * And almost always before and after every saccade should be a short period of relative tranquility:
  * REST_TIME = 100-200 ms
  */
-public class SaccadeDetector1 {
+public class SaccadeDetectorOld {
     private static final int SACCADE_DURATION_MIN = 40; // [ms]  (milliseconds)
     private static final int SACCADE_DURATION_MAX = 320; // [ms]
     private static final int SACCADE_PEAK_VELOCITY_MAX = 700; // [°/s]
@@ -107,7 +105,7 @@ public class SaccadeDetector1 {
             SACCADE_PEAK_VELOCITY_MAX * SENSITIVITY * AVERAGING_TIME / 1000; // [ µV ]
 
     private static final int THRESHOLD_PERIOD_GLOBAL = 20000; // [ms]
-    private static final int THRESHOLD_PERIOD_LOCAL = 100; // [ms]
+    private static final int THRESHOLD_PERIOD_LOCAL = 200; // [ms]
     private static final double SACCADE_THRESHOLD_RATIO_MIN = 1.3;
     private static final double N = 3; // Threshold to noise ratio
 
@@ -121,8 +119,8 @@ public class SaccadeDetector1 {
     private static final int THRESHOLD_LAG_POINTS = 2;
 
     private DataSeries velocityData;
-    private Saccade detectingSaccade;
-    private Saccade previousSaccade;
+    private SaccadeOld detectingSaccade;
+    private SaccadeOld previousSaccade;
     private boolean isSaccadeUnderDetection = false;
 
     private int threshold;
@@ -136,9 +134,9 @@ public class SaccadeDetector1 {
     private DataList thresholdLocalList = new DataList();
 
 
-    SaccadeDetector1(DataSeries eogData) {
-        velocityData = new SaccadeFunction(new FilterDerivativeRem(eogData));
-        DataSeries accelerationData = new FilterDerivativeRem(new FilterDerivativeRem(eogData));
+    SaccadeDetectorOld(DataSeries eogData) {
+        velocityData = new FilterDerivativeRem(eogData);
+        DataSeries accelerationData = new FilterDerivativeRem(velocityData);
         noiseDetectorGlobal = new NoiseDetector(accelerationData, THRESHOLD_PERIOD_GLOBAL);
         noiseDetectorLocal = new NoiseDetector(velocityData, THRESHOLD_PERIOD_LOCAL);
         double gain = 1;
@@ -218,13 +216,13 @@ public class SaccadeDetector1 {
      * of the square of its Fourier transform. So from a physical point of view, more adequately work
      * with squares values (energy) )
      */
-    public Saccade getNext() {
+    public SaccadeOld getNext() {
         double currentThreshold = getThreshold();
-        Saccade resultSaccade = null;
+        SaccadeOld resultSaccade = null;
         if (!isSaccadeUnderDetection) {
             if (Math.abs(velocityData.get(currentIndex)) > currentThreshold) {    // saccade begins
                 isSaccadeUnderDetection = true;
-                detectingSaccade = new Saccade(currentIndex, velocityData.get(currentIndex));
+                detectingSaccade = new SaccadeOld(currentIndex, velocityData.get(currentIndex));
             }
         } else {
             if (Math.abs(velocityData.get(currentIndex)) > currentThreshold && isEqualSign(velocityData.get(currentIndex), detectingSaccade.getPeakValue())) {   // saccade  continues

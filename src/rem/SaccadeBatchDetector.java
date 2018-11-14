@@ -25,7 +25,7 @@ public class SaccadeBatchDetector implements DataSeries {
     private int saccadeMaxDistancePoints;
     private int currentIndex = -1;
     private DataSeries inputData;
-    private SaccadeDetector saccadeDetector;
+    private SaccadeDetectorOld saccadeDetector;
 
     public SaccadeBatchDetector(DataSeries inputData) {
         double samplingRate = 1;
@@ -33,7 +33,7 @@ public class SaccadeBatchDetector implements DataSeries {
             samplingRate = 1 / inputData.getScaling().getSamplingInterval();
         }
         this.inputData = inputData;
-        saccadeDetector = new SaccadeDetector(inputData);
+        saccadeDetector = new SaccadeDetectorOld(inputData);
         saccadeMaxDistancePoints = (int)(SACCADE_DISTANCE_MAX * samplingRate );
     }
 
@@ -48,7 +48,7 @@ public class SaccadeBatchDetector implements DataSeries {
 
     private void detectNext() {
         currentIndex++;
-        Saccade saccade = saccadeDetector.getNext();
+        SaccadeOld saccade = saccadeDetector.getNext();
         if(saccade != null) {
             SaccadesBatch lastBatch = null;
             if(saccadesBatchList.size() > 0) {
@@ -76,7 +76,7 @@ public class SaccadeBatchDetector implements DataSeries {
         }
     }
 
-    private void addSaccadeToResult(Saccade saccade) {
+    private void addSaccadeToResult(SaccadeOld saccade) {
         for(int i = saccade.getBeginIndex(); i <= saccade.getEndIndex(); i++ ) {
             resultHash.put(i, Math.abs(saccade.getPeakValue()));
         }
@@ -89,7 +89,7 @@ public class SaccadeBatchDetector implements DataSeries {
 
 
     private boolean isBatchPossible(SaccadesBatch batch) {
-        Saccade lastSaccade = batch.getSaccade(batch.getNumberOfSaccades() - 1);
+        SaccadeOld lastSaccade = batch.getSaccade(batch.getNumberOfSaccades() - 1);
         DataSeries fourier =  Fourie.fftBackward( new FilterDerivative(inputData), lastSaccade.getEndIndex(), FOURIER_TIME);
         if(FourierAnalizer.hasAlfa(fourier)) {
             return false;
@@ -128,7 +128,7 @@ public class SaccadeBatchDetector implements DataSeries {
         update();
         if(saccadesBatchList.size() > 0) {
             SaccadesBatch lastBatch = saccadesBatchList.get(saccadesBatchList.size() -1);
-            Saccade lastSaccade =  lastBatch.getSaccade(lastBatch.getNumberOfSaccades() - 1);
+            SaccadeOld lastSaccade =  lastBatch.getSaccade(lastBatch.getNumberOfSaccades() - 1);
             return lastSaccade.getEndIndex();
         }
         return 0;

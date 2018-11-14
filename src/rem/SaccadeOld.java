@@ -1,6 +1,6 @@
 package rem;
 
-public class Saccade {
+public class SaccadeOld {
     private int beginIndex;
     private int endIndex;
     private int peakIndex;
@@ -8,7 +8,7 @@ public class Saccade {
     private int sumValue;
 
 
-    public Saccade(int index, int value) {
+    public SaccadeOld(int index, int value) {
         beginIndex = index;
         peakIndex = index;
         endIndex = index;
