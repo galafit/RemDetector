@@ -1,24 +1,37 @@
 package rem.saccade;
 
-public class Saccade {
+
+class Saccade {
     private int startIndex;
+    private int peakIndex;
+
     private int numberOfPoints;
-    private int maxValue;
-    private int sumValue;
+    private int peakValue;
+    private int energy;
+    private int noiseLevel;
 
 
-    public Saccade(int index, int value) {
+    public Saccade(int value, int index, int noiseLevel) {
         startIndex = index;
+        peakValue = value;
+        this.noiseLevel = noiseLevel;
+        energy += value * value;
         numberOfPoints++;
-        sumValue = value;
-        maxValue = value;
     }
 
-    public void addPoint(int value) {
-        if(Math.abs(maxValue) < Math.abs(value)) {
-            maxValue = value;
+
+
+    public void addData(int value) throws IllegalArgumentException{
+        if(!isEqualSign(peakValue, value)) {
+            String msg = "All saccade values must have the same sign";
+           // System.out.println(msg);
+           // throw new IllegalArgumentException(msg);
         }
-        sumValue += value;
+
+        if(Math.abs(peakValue) < Math.abs(value)) {
+            peakValue = value;
+        }
+        energy += value * value;
         numberOfPoints++;
     }
 
@@ -26,12 +39,8 @@ public class Saccade {
         return numberOfPoints;
     }
 
-    public int getAverageValue() {
-        return sumValue / getWidth();
-    }
-
-    public int getMaxValue() {
-        return maxValue;
+    public int getPeakValue() {
+        return peakValue;
     }
 
     public int getStartIndex() {
@@ -39,6 +48,23 @@ public class Saccade {
     }
 
     public int getEndIndex() {
-        return startIndex + numberOfPoints;
+        return startIndex + numberOfPoints - 1;
     }
+
+    public int getRatioToNoise() {
+        return (int)Math.sqrt(energy / (noiseLevel * noiseLevel));
+    }
+
+    private boolean isEqualSign(int a, int b) {
+        if ((a >= 0) && (b >= 0)) {
+            return true;
+        }
+
+        if ((a <= 0) && (b <= 0)) {
+            return true;
+        }
+
+        return false;
+    }
+
 }

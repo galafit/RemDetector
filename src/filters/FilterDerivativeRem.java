@@ -18,10 +18,9 @@ public class FilterDerivativeRem extends Function {
             samplingRate = 1 / inputData.getScaling().getSamplingInterval();
         }
         distance_point = Math.round((float)(timeMs * samplingRate / 1000));
-        if(distance_point== 0) {
+        if(distance_point == 0) {
             distance_point = 1;
         }
-        distance_point = 1;
     }
 
     public FilterDerivativeRem(DataSeries inputData) {

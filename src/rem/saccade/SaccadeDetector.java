@@ -5,6 +5,8 @@ import data.DataSeries;
 import data.Scaling;
 import filters.FilterDerivativeRem;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,15 +61,13 @@ import java.util.List;
  * Besides we measure the averaged values (during 20-40 ms) so the average velocity peak is at
  * least 20-30 percent less then the instantaneous velocity peak.
  * <br>
- * MAX_PEAK_VELOCITY_DEGREES  = 700 °/s
+ * PEAK_VELOCITY_MAX  = 700 °/s
  * <br><br>
  * (See: <a href="https://www.liverpool.ac.uk/~pcknox/teaching/Eymovs/params.htm">The parameters of eye movement</a>
  * and <a href = "https://www.researchgate.net/post/What_is_the_average_duration_for_saccades_with_36_and_54_of_amplitude">
  *     average duration for saccades with 36º and 54º of amplitude</a>
  * Here is the link to download a book from Roger Carpenter
  * http://libgen.io/ads.php?md5=22AB8EC2F36192D85A1F5288187D0888
- * http://gen.lib.rus.ec/book/index.php?md5=22AB8EC2F36192D85A1F5288187D0888
- * Torrent: http://download1.libgen.io/ads.php?md5=22AB8EC2F36192D85A1F5288187D0888)
  *
  * <p/>
  * SACCADE DURATION:  20-200ms (Most of them 30-80ms).
@@ -80,25 +80,24 @@ import java.util.List;
  * SACCADE_DURATION_MIN = 37-40 ms
  *
  * <p/>
- * But we need take into account that besides the saccades there are
- * also <b>smooth pursuit eye movements</b> that allows the eyes to closely follow a moving object and
- * that has duration about 133ms and latency 125ms and that can precede or follow saccades.
- * (See https://physoc.onlinelibrary.wiley.com/doi/pdf/10.1113/jphysiol.1965.sp007718)
- * Other authors write about Glissades eye movements.
- * It was found that a big main saccade is frequently followed by a second smaller corrective movement
- * that brings the eye closer to the target o Glissades.
- * (Glissades - slow drifting eye movements occasionally seen at the end of saccadic eye movements).
- * Glissades duration 30-280ms.
+ * But we need take into account that  it was found that a big main saccade
+ * is frequently followed by a second smaller corrective saccade or
+ * slow drifting eye movement (Glissade) that brings the eye closer to the target
  * (See http://sysengr.engr.arizona.edu/publishedPapers/Glissades.pdf)
  *
- * So  real full eye movement can have duration till 500ms (saccade + glissade or saccade + pursuit eye movement)
- * <br>
- * SACCADE_DURATION_MAX_MS = 500 ms
- *
- * <p/>
- * !!! The movement of the eyes usually undershoots the target and requires another small saccade to reach it.
+ * !! The movement of the eyes usually undershoots the target and requires another
+ * small saccade in the same direction to reach it.
  * Overshooting of the target is uncommon in normal subjects.!!!
  * (http://www.bem.fi/book/28/28.htm)
+ *
+ * This corrective saccades can occur almost immediately and
+ * merging with the main saccade so the resultant eye movement can have duration till
+ * 300-400ms.
+ *
+ * Another thing: "eye calibration" (max movement Right-Left) also take time about 400-500ms.
+ * So summarizing all these cases we can accept:
+ * <br>
+ * SACCADE_DURATION_MAX_MS = 500 ms
  *
  *
  * <p/>
@@ -119,8 +118,8 @@ import java.util.List;
  * although much longer and shorter fixations can occur:
  * <ul>
  * <li>Normal fixations: 150-900ms</li>
- * <li>Overlong fixations: 4900ms</li>
- * <li>Short fixations: 50ms</li>
+ * <li>Overlong fixations: 5-6 seconds</li>
+ * <li>Short fixations: 50-100ms</li>
  * </ul>
  * Thus:
  * <br>FIXATION_NORMAL = 600 - 1000 ms
@@ -173,68 +172,87 @@ import java.util.List;
  * And it gives us our signal magnitudes about  10 µV/° (microvolts per degree)
  * SENSITIVITY = 15 - 7 µV/°
  * SENSITIVITY_MAX = => 15µV/°
+ * <p/>
+ *
+ * * *******************************************************
+ * *                  DETECTOR ALGORITHM                   *
+ * *********************************************************
+ * <p/>
+ * To detect saccades we use a variation of Velocity/Acceleration-Threshold Algorithm
+ * that separates fixation and saccade points based on their point-to-point velocities/acceleration.
+ * The velocity profiles of  eye movements show essentially two distributions of velocities:
+ * low velocities for smooth pursuit(slower tracking) movements, glissades and fixations (i.e., < 50 deg/sec),
+ * and high velocities (i.e., >100 deg/sec) for saccades
+ * <p/>
+ * Our algorithm:
+ * <br>1) Instead of fixed threshold use adaptive threshold calculated from
+ * the signal data itself during some period (noise)
+ *
+ * <br>2) Threshold is calculated on the base of energy, summarizing the squares of the values (instead of absolute values)
+ * (Parseval's theorem:  the sum (or integral) of the square of a function is equal to the sum (or integral)
+ * of the square of its Fourier transform. So from a physical point of view, more adequately work
+ * with squares values (energy)
+ *
+ * <br>3) Instead of  instantaneous velocity and acceleration we use the averaged (for 40-60ms) ones.
+ * That reduce random noise and emphasize saccades
  *
  */
 
 public class SaccadeDetector implements DataSeries {
-    private static final int SACCADE_WIDTH_MIN_MS = 40; // [ms] (milliseconds)
-    private static final int SACCADE_WIDTH_MAX_MS = 320;
-    private static final int SACCADE_PEAK_VELOCITY_MAX = 700; // [°/s]
-    private static final int AVERAGING_TIME_MS = 40;
+    private static final int SACCADE_DURATION_MIN_MS = 40; // [ms] (milliseconds)
+    private static final int SACCADE_DURATION_MAX_MS = 800;
+    private static final int PEAK_VELOCITY_MAX = 700; // (900) [degrees/s]
 
-    private static final int SACCADES_DISTANCE_MAX_MS = 5000;
-    private static final int SACCADES_DISTANCE_NORMAL_MS = 600;
-    private static final int SACCADES_DISTANCE_MIN_MS = 50;
+    private static final int SACCADES_DISTANCE_MAX_MS = 6000;
+    private static final int SACCADES_DISTANCE_MIN_MS = 200;
 
-    private static final int SENSITIVITY = 14; // [µV/°]
-    private static final double SACCADE_MAX_PHYSICAL_VALUE =
-            SACCADE_PEAK_VELOCITY_MAX * SENSITIVITY * AVERAGING_TIME_MS / 1000; // [ µV ]
+    private static final int SENSITIVITY = 15; // [µV/degree]
 
-    private static final int THRESHOLD_INTERVAL_MS = 2000;
-    private static final int START_DEAD_INTERVAL_MS = 10000; // no saccade detection
 
-    private static final int THRESHOLD_NOISE_RATIO = 6; // Threshold to noise ratio
+    private SaccadeListener saccadeListener;
+    private int zeroPointsNumber = 3; // to detect disconnections
+    private int noiseAveragingIntervalMs = 400;
 
-    private final int saccadeMaxDigitalValue;
-    private final int saccadeWidthMinPoints;
-    private final int saccadeWidthMaxPoints;
-    private final int saccadeDistanceMaxPoints;
-    private final int saccadeDistanceMinPoints;
-    private final int startDeadIntervalPoints;
+    private int startBlockedIntervalMs = 10 * 1000; // no detection
 
-    private DataSeries velocityData;
+    private int thresholdNoiseRatio = 6; // Threshold to noise ratio
+
+    private DataSeries eogDerivative;
+    private int eogDerivativeIntervalMs = 40;
+
+    private int saccadeMaxDigitalValue;
+    private int saccadeDurationMinPoints;
+    private int saccadeDurationMaxPoints;
+    private int saccadeDistanceMaxPoints;
+    private int saccadeDistanceMinPoints;
+    private int startBlockedIntervalPoints;
+
     private EnergyNoiseDetector noiseDetector;
 
-    // during disconnections signal is a constant and its derivative (velocity) == 0
+    // during disconnections signal is a constant and its derivative == 0
     private LinearNoiseDetector zeroDetector;
-    private static final int ZERO_POINTS_NUMBER = 3;
 
+    /**
+     * we calculate  threshold on the base of noise
+     * not at the currentIndex (where we take the Value to compare with the threshold)
+     * but "noiseLagPoints"  before
+     * Value almost never grows at once/immediately (it took 1-4 points as a rule)
+     * so we need a shift/gap between the  threshold and the currentIndex
+     */
+    private int noiseLagPoints;
+
+    private Saccade currentSaccade;
+    private SaccadeGroup currentSaccadeGroup;
     private int currentIndex = -1;
-    private int zeroLastIndex = -1;
-    private int nonRemActivityLastIndex = -1;
+
+    private int disconnectionIndex = -1;
+    private int nonSaccadicActivityIndex = -1;
 
 
     private boolean isThresholdsCachingEnabled;
     private DataList thresholdList = new DataList();
 
-    /**
-     * we calculate  global threshold on the base of noise
-     * not at the currentIndex (where we take the Value to compare with the threshold)
-     * but "thresholdLagPoints"  before
-     * Value almost never grows at once/immediately (it took 1-4 points as a rule)
-     * so we need a shift/gap between the  threshold and the currentIndex
-     */
-    private int thresholdLagPoints = 2;
-
-
-
-    private Saccade currentPeak; // to become saccade peak should be approved
-
-    // saccades appear in group always. Single saccade will not be approved
-    private List<Saccade> saccadeGroup = new ArrayList<>(10);
-    private static final int SACCADE_MIN_NUMBER_IN_GROUP = 3;
-
-    private List<Saccade> saccadeList = new ArrayList<>(); // approved saccades
+    private List<Saccade> saccadeList = new ArrayList<>();
     private HashMap<Integer, Integer> saccadeValues = new HashMap<>();
 
     public SaccadeDetector(DataSeries eogData) {
@@ -242,85 +260,100 @@ public class SaccadeDetector implements DataSeries {
     }
 
     public SaccadeDetector(DataSeries eogData, boolean isThresholdsCachingEnabled) {
-        velocityData = new FilterDerivativeRem(eogData);
-        double gain = 1;
-        if (eogData.getScaling() != null) {
-            gain = eogData.getScaling().getDataGain();
-        }
-        saccadeMaxDigitalValue = (int) (SACCADE_MAX_PHYSICAL_VALUE / gain);
         double dataIntervalMs = eogData.getScaling().getSamplingInterval() * 1000;
-        saccadeWidthMinPoints = (int) Math.round(SACCADE_WIDTH_MIN_MS / dataIntervalMs);
-        saccadeWidthMaxPoints = (int) Math.round(SACCADE_WIDTH_MAX_MS / dataIntervalMs);
+
+        eogDerivative = new FilterDerivativeRem(eogData, eogDerivativeIntervalMs);
+
+        int saccadeMaxPhysValue = PEAK_VELOCITY_MAX * SENSITIVITY * eogDerivativeIntervalMs / 1000;
+        saccadeMaxDigitalValue = (int) (saccadeMaxPhysValue / eogData.getScaling().getDataGain());
+
+        saccadeDurationMinPoints = (int) Math.round(SACCADE_DURATION_MIN_MS / dataIntervalMs);
+        saccadeDurationMaxPoints = (int) Math.round(SACCADE_DURATION_MAX_MS / dataIntervalMs);
         saccadeDistanceMaxPoints = (int) Math.round(SACCADES_DISTANCE_MAX_MS / dataIntervalMs);
         saccadeDistanceMinPoints = (int) Math.round(SACCADES_DISTANCE_MIN_MS / dataIntervalMs);
-        startDeadIntervalPoints = (int) Math.round(START_DEAD_INTERVAL_MS / dataIntervalMs);
+        startBlockedIntervalPoints = (int) Math.round(startBlockedIntervalMs / dataIntervalMs);
 
-        int thresholdIntervalPoints = (int) Math.round(THRESHOLD_INTERVAL_MS / dataIntervalMs);
-        if(thresholdIntervalPoints < 1) {
-            thresholdIntervalPoints = 1;
+        noiseLagPoints = 10;
+
+        int noiseAveragingIntervalPoints = (int) Math.round(noiseAveragingIntervalMs / dataIntervalMs);
+        if(noiseAveragingIntervalPoints < 1) {
+            noiseAveragingIntervalPoints = 1;
         }
-        noiseDetector = new EnergyNoiseDetector(new FilterDerivativeRem(eogData), thresholdIntervalPoints);
-        zeroDetector = new LinearNoiseDetector(velocityData, ZERO_POINTS_NUMBER);
+        noiseDetector = new EnergyNoiseDetector(eogDerivative, noiseAveragingIntervalPoints);
+        zeroDetector = new LinearNoiseDetector(eogDerivative, zeroPointsNumber);
         this.isThresholdsCachingEnabled = isThresholdsCachingEnabled;
+        saccadeListener = new NullSaccadeListener();
+
+
+        int noiseDB1 = (int)(10 * Math.log10(6*6));
+        int noiseDB2 = (int)(10 * Math.log10(8*8));
+        int noiseDB3 = (int)(10 * Math.log10(9*9));
+        System.out.println("db ratio "+ noiseDB1 + " "+noiseDB2+ "  "+noiseDB3);
+
+        noiseDB1 = (int)(10 * Math.log10(10*10));
+        noiseDB2 = (int)(10 * Math.log10(20*20));
+        noiseDB3 = (int)(10 * Math.log10(30*30));
+        System.out.println("db ratio "+ noiseDB1 + " "+noiseDB2+ "  "+noiseDB3);
+
     }
 
-
-    private int getThreshold() {
-        // wait "thresholdLagPoints" before start noiseDetector
-        if (currentIndex < thresholdLagPoints) {
-            return 0;
+    public void setSaccadeListener(SaccadeListener saccadeListener) {
+        if(saccadeListener != null) {
+            this.saccadeListener = saccadeListener;
         }
+        this.saccadeListener = new NullSaccadeListener();
+    }
 
-        boolean isPreviousSacadeClose = false;
-        if (saccadeGroup.size() > 0) {
-            Saccade previousSaccade = saccadeGroup.get(saccadeGroup.size() - 1);
-
-            if (currentIndex - previousSaccade.getEndIndex() < 2 * thresholdLagPoints) {
-                isPreviousSacadeClose = true;
-            }
-        }
-
-        if (currentPeak != null || isPreviousSacadeClose || isDisconnected()) {
-            return noiseDetector.skipNext() * THRESHOLD_NOISE_RATIO;
-        } else {
-            return noiseDetector.calculateNext() * THRESHOLD_NOISE_RATIO;
-        }
+    public void removeSaccadeListener() {
+        saccadeListener = new NullSaccadeListener();
     }
 
 
     /**
-     * To detect saccades we use a variation of Velocity/Acceleration-Threshold Algorithm
-     * that separates fixation and saccade points based on their point-to-point velocities/acceleration.
-     * The velocity profiles of saccadic eye
-     * movements show essentially two distributions of velocities:
-     * low velocities for fixations (i.e., <100 deg/sec), and high
-     * velocities (i.e., >300 deg/sec) for saccades
-     * <p/>
-     * Our algorithm:
-     * 1) instead of fixed threshold use adaptive threshold calculated from the signal data itself during some period
-     * 2) combine acceleration and velocity data: the threshold we calculated from the acceleration data
-     * and then use it to detect velocity peaks.
-     * (As acceleration actually involves data from more points: velocity = x2 - x1 and
-     * acceleration = x3 + x1 - 2*x2, acceleration threshold is more sensitive to noise and
-     * permits cut it off more effective, while in REM where "noise" decrease
-     * Acceleration and Velocity thresholds are almost equal)
-     * 3) instead of  instantaneous velocity and acceleration we use the averaged (for 40ms) ones.
-     * That also reduce random noise and emphasize saccades
-     * 4) Threshold is calculated on the base of energy, summarizing the squares of the values (instead of absolute values)
-     * (Parseval's theorem:  the sum (or integral) of the square of a function is equal to the sum (or integral)
-     * of the square of its Fourier transform. So from a physical point of view, more adequately work
-     * with squares values (energy) )
+     * Noise/threshold is calculated with some delay (noiseLagPoints)
+     * to avoid its growing when we are close to a saccade.
+     * In the area: [noiseLagPoints before saccade | saccade | noiseLagPoints after saccade]
+     * noise/threshold is fixed and do not change.
      */
-    // TODO handle situation velocity_abs > threshold but velocity change sign
+    private int getNoiseOnNextData() {
+        // wait "noiseLagPoints" before start noiseDetector
+        if (currentIndex < noiseLagPoints) {
+            return 0;
+        }
+
+        boolean isSaccadeClose = false;
+        //  we skip noise on the points belonging to saccade and (+-)noiseLagPoints around  saccade
+        if(currentSaccade != null ) {
+            isSaccadeClose = true;
+        } else if (currentSaccadeGroup != null) {
+             if (currentIndex - currentSaccadeGroup.getEndIndex() < 2 * noiseLagPoints) {
+                isSaccadeClose = true;
+            }
+        }
+
+        if (isSaccadeClose || isDisconnected()) {
+            return noiseDetector.skipNext();
+        } else {
+            return noiseDetector.calculateNext();
+        }
+
+    }
+
+
     public void detectOnNextData() {
         currentIndex++;
 
         // check if there are signal problems ()
         if(zeroDetector.calculateNext() == 0) {
-            zeroLastIndex = currentIndex;
+            disconnectionIndex = currentIndex;
         }
 
-        int threshold = getThreshold();
+        int noise = getNoiseOnNextData();
+        int threshold = noise * thresholdNoiseRatio;
+
+        if(noise == 0) {
+            System.out.println(indexToDateTime(currentIndex) + " noise "+noise);
+        }
 
         if(isThresholdsCachingEnabled) {
             thresholdList.add(threshold);
@@ -330,118 +363,113 @@ public class SaccadeDetector implements DataSeries {
             return;
         }
 
-        int velocity = Math.abs(velocityData.get(currentIndex));
-        if (currentPeak == null) {
-            if (velocity > threshold) { // saccade start
-                currentPeak = new Saccade(currentIndex, velocity);
+        int dataValue = eogDerivative.get(currentIndex);
+        int dataValueAbs = Math.abs(dataValue);
+        if (currentSaccade == null) {
+            if (dataValueAbs > threshold) { // saccade start
+                currentSaccade = new Saccade(currentIndex, dataValue, noise);
             }
         } else {
-            if (velocity > threshold) {
-                currentPeak.addPoint(velocity);
+            if (dataValueAbs > threshold) {
+                try {
+                    currentSaccade.addData(dataValue);
+                } catch (IllegalArgumentException ex) {
+                    noiseDetector.restoreLastSkippedValues(currentSaccade.getWidth());
+                    currentSaccade = null;
+                }
             } else { // saccade end
-                int saccadeDistance = 0;
-                if(saccadeGroup.size() > 0) {
-                    Saccade lastSaccadeInGroup = saccadeGroup.get(saccadeGroup.size() - 1);
-                    saccadeDistance = currentPeak.getStartIndex() - lastSaccadeInGroup.getEndIndex();
-
-                }
-                if(saccadeDistance > saccadeDistanceMaxPoints) {
-                    saccadeGroup.clear();
-                }
-                saccadeGroup.add(currentPeak);
-
-                if(saccadeGroup.size() == SACCADE_MIN_NUMBER_IN_GROUP) {
-                    if(isSaccadeGroupOk(saccadeGroup)) {
-                        // approve all saccades in group
-                        for (int i = 0; i < saccadeGroup.size(); i++) {
-                            approveSaccade(saccadeGroup.get(i));
-                        }
+              //  System.out.println(isSaccadeOk(currentSaccade)+ "   "+indexToDateTime(currentSaccade.getStartIndex()) +" saccade  "+currentSaccade.getWidth()+ "    " +currentSaccade.getStartIndex());
+                if (!isSaccadeOk(currentSaccade)) {
+                    noiseDetector.restoreLastSkippedValues(currentSaccade.getWidth());
+                    currentSaccade = null;
+                } else {
+                    if (currentSaccadeGroup == null || currentSaccadeGroup.isSaccadeOutOfGroupRange(currentSaccade)) {
+                        currentSaccadeGroup = new SaccadeGroup(currentSaccade);
+                        currentSaccade = null;
                     } else {
-                        saccadeGroup.clear();
-                        // mark that as nonRemActivity
-                        nonRemActivityLastIndex = currentIndex;
+                        try {
+                            currentSaccadeGroup.addSaccade(currentSaccade);
+                            currentSaccade = null;
+                        } catch (IllegalArgumentException ex) {
+                            noiseDetector.restoreLastSkippedValues(currentSaccade.getWidth());
+                            nonSaccadicActivityIndex = currentIndex;
+                            currentSaccade = null;
+                            currentSaccadeGroup = null;
+                        }
                     }
-                } else if(saccadeGroup.size() > SACCADE_MIN_NUMBER_IN_GROUP) {
-                    // approve saccade without any verification
-                    approveSaccade(currentPeak);
                 }
-                currentPeak = null;
+
+              //  System.out.println(" group "+ indexToDateTime(currentSaccadeGroup.getStartIndex()));
             }
         }
     }
+
+    private String indexToDateTime(int index) {
+        Scaling scaling = eogDerivative.getScaling();
+        long time = (long)(scaling.getStart() + scaling.getSamplingInterval() * index * 1000);
+        DateFormat formatter = new SimpleDateFormat("HH:mm:ss.SSS");
+        return formatter.format(time);
+    }
+
+
     // connection problems and signal failure
     // (when dataVelocity = 0 during more then 2-3 points)
     private boolean isDisconnected() {
-        if(currentIndex == zeroLastIndex) {
+        if(currentIndex == disconnectionIndex) {
            return true;
         }
         return false;
     }
 
     private boolean isSaccadeDetectionDisabled() {
-        if (currentIndex < startDeadIntervalPoints) {
+        if (currentIndex < startBlockedIntervalPoints) {
             return true;
         }
         // noise buffer data must be completely updated
-        if((currentIndex - zeroLastIndex) < noiseDetector.getBufferSize()) {
+        if((currentIndex - disconnectionIndex) < noiseDetector.getBufferSize()) {
             return true;
         }
-        if((currentIndex - nonRemActivityLastIndex) < noiseDetector.getBufferSize()){
+        if((currentIndex - nonSaccadicActivityIndex) < noiseDetector.getBufferSize()){
             return true;
         }
         return false;
     }
 
-    private void approveSaccade(Saccade saccade) {
-        saccadeList.add(saccade);
-        for (int i = saccade.getStartIndex(); i <= saccade.getEndIndex(); i++) {
-            saccadeValues.put(i, saccade.getMaxValue());
+    private void onSaccadesApproved(Saccade... saccades) {
+        for (Saccade saccade : saccades) {
+            for (int i = saccade.getStartIndex(); i <= saccade.getEndIndex(); i++) {
+                saccadeList.add(saccade);
+                saccadeValues.put(i, Math.abs(saccade.getPeakValue()));
+            }
         }
+        saccadeListener.onSaccadesDetected(saccades);
     }
 
-    private boolean isSaccadeGroupOk(List<Saccade> saccadeGroup) {
-        int avgSaccadeWidth = 0;
-        int avgSaccadeDistance = 0;
-        int groupSize = saccadeGroup.size();
-        for (int i = 0; i < groupSize; i++) {
-            Saccade saccade_i = saccadeGroup.get(i);
-            if(saccade_i.getMaxValue() > SACCADE_PEAK_VELOCITY_MAX) {
-              //  return false;
-            }
-            avgSaccadeWidth += saccade_i.getWidth();
-            if(i > 0) {
-                avgSaccadeDistance += saccade_i.getStartIndex() - saccadeGroup.get(i - 1).getEndIndex();
-            }
-        }
-        avgSaccadeWidth = avgSaccadeWidth / groupSize;
-        avgSaccadeDistance = avgSaccadeDistance / (groupSize - 1);
+    private void onSaccadeGroupApproved(SaccadeGroup saccadeGroup) {
 
-        if(avgSaccadeWidth < saccadeWidthMinPoints * 2) {
-            return false;
+    }
+
+    private boolean isSaccadeOk(Saccade saccade) {
+
+        if(saccade.getPeakValue() > saccadeMaxDigitalValue) {
+            //return false;
+        }
+        if(saccade.getWidth() > saccadeDurationMaxPoints || saccade.getWidth() < saccadeDurationMinPoints) {
+           // return false;
         }
 
-        if(avgSaccadeWidth > saccadeWidthMaxPoints ) {
-            return false;
-        }
-
-        if(avgSaccadeDistance < saccadeDistanceMinPoints * 2) {
-            return false;
-        }
         return true;
-
     }
+
 
     private void update() {
-        for (int i = currentIndex; i < velocityData.size() - 1; i++) {
+        for (int i = currentIndex; i < eogDerivative.size() - 1; i++) {
             detectOnNextData();
         }
     }
 
 
-
     /**
-     *
-     * @return
      * @throws IllegalStateException if isThresholdsCachingEnabled = false
      */
     public DataSeries getThresholds() throws IllegalStateException {
@@ -463,7 +491,7 @@ public class SaccadeDetector implements DataSeries {
 
             @Override
             public Scaling getScaling() {
-                return velocityData.getScaling();
+                return eogDerivative.getScaling();
             }
         };
     }
@@ -471,7 +499,7 @@ public class SaccadeDetector implements DataSeries {
     @Override
     public int size() {
         update();
-        return velocityData.size();
+        return eogDerivative.size();
     }
 
     @Override
@@ -485,19 +513,70 @@ public class SaccadeDetector implements DataSeries {
 
     @Override
     public Scaling getScaling() {
-        return velocityData.getScaling();
+        return eogDerivative.getScaling();
     }
 
-    private boolean isEqualSign(int a, int b) {
-        if ((a >= 0) && (b >= 0)) {
-            return true;
+
+    /**
+     * Saccades always appear in group.
+     * Single saccades are not taken into account
+     */
+    class SaccadeGroup {
+        private ArrayList<Saccade> saccadeList = new ArrayList<>(10);
+        private int saccadesInGroupMin = 3;
+        private boolean isApproved = false;
+
+        public SaccadeGroup(Saccade saccade) {
+            saccadeList.add(saccade);
         }
 
-        if ((a <= 0) && (b <= 0)) {
-            return true;
+        public int saccadesCount() {
+            return saccadeList.size();
         }
 
-        return false;
+        public int getStartIndex() {
+            return saccadeList.get(0).getStartIndex();
+        }
+
+        public int getEndIndex() {
+            return saccadeList.get(saccadeList.size() - 1).getEndIndex();
+        }
+
+        public int getWidth() {
+            return getEndIndex() - getStartIndex() + 1;
+        }
+
+        public void addSaccade(Saccade saccade) throws IllegalArgumentException {
+            saccadeList.add(saccade);
+            if(saccadesCount() == saccadesInGroupMin) {
+                approveGroup();
+            } else {
+                if(isApproved) {
+                    onSaccadesApproved(saccade);
+                }
+            }
+        }
+
+        private void approveGroup() {
+            isApproved = true;
+            onSaccadeGroupApproved(this);
+            onSaccadesApproved(saccadeList.toArray(new Saccade[saccadeList.size()]));
+        }
+
+        public boolean isSaccadeOutOfGroupRange(Saccade saccade) {
+            if(saccade.getStartIndex() - getEndIndex() > saccadeDistanceMaxPoints) {
+                return true;
+            }
+            return false;
+        }
     }
+
+    class NullSaccadeListener implements SaccadeListener {
+        @Override
+        public void onSaccadesDetected(Saccade[] saccades) {
+            // do nothing!
+        }
+    }
+
 
 }

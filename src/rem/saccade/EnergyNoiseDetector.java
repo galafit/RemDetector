@@ -39,7 +39,7 @@ public class EnergyNoiseDetector {
     }
 
     public int calculateNext() {
-        int value = Math.abs(inputData.get(counter++));
+        int value = inputData.get(counter++);
         fifoBuffer.add(value);
         sum += value * value;
 
@@ -61,6 +61,17 @@ public class EnergyNoiseDetector {
             return (int) Math.sqrt(sum / fifoBuffer.size());
         }
         return 0;
+    }
+
+    /**
+     * restore last n skipped values
+     * @param n number of last skipped values to restore
+     */
+    public void restoreLastSkippedValues(int n) {
+        counter -= n;
+        for (int i = 0; i < n ; i++) {
+            calculateNext();
+        }
     }
 
 

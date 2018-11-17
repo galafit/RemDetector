@@ -2,10 +2,7 @@ package dreamrec;
 
 import data.CompressionType;
 import data.DataSeries;
-import filters.FilterBandPass_Alfa;
-import filters.FilterDerivativeRem;
-import filters.FilterHiPass;
-import filters.HiPassCollectingFilter;
+import filters.*;
 import functions.Abs;
 import functions.Constant;
 import functions.Minus;
@@ -158,7 +155,7 @@ public class Presenter implements  ControllerListener {
         graphViewer.addGraph(saccades.getThresholds());
 
 
-        graphViewer.addGraphPanel(3, false);
+        graphViewer.addGraphPanel(2, false);
         graphViewer.addGraph(saccades);
 
 
@@ -168,7 +165,7 @@ public class Presenter implements  ControllerListener {
  //       graphViewer.addGraph(accMovement);
   //      graphViewer.addGraph(new Constant(accMovement, accMovementLimit));
 
-        graphViewer.addPreviewPanel(4, false);
+        graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
         graphViewer.addPreview(isSleep, GraphType.BOOLEAN, CompressionType.BOOLEAN);
     }
