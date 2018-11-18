@@ -1,70 +1,32 @@
 package rem.saccade;
 
+/**
+ * Created by galafit on 18/11/18.
+ */
+public class Saccade {
+    long startTime; // ms
+    long duration; // ms
+    int value;
 
-class Saccade {
-    private int startIndex;
-    private int peakIndex;
-
-    private int numberOfPoints;
-    private int peakValue;
-    private int energy;
-    private int noiseLevel;
-
-
-    public Saccade(int value, int index, int noiseLevel) {
-        startIndex = index;
-        peakValue = value;
-        this.noiseLevel = noiseLevel;
-        energy += value * value;
-        numberOfPoints++;
+    public Saccade(long startTime, long duration, int value) {
+        this.startTime = startTime;
+        this.duration = duration;
+        this.value = value;
     }
 
-
-
-    public void addData(int value) throws IllegalArgumentException{
-        if(!isEqualSign(peakValue, value)) {
-            String msg = "All saccade values must have the same sign";
-           // System.out.println(msg);
-           // throw new IllegalArgumentException(msg);
-        }
-
-        if(Math.abs(peakValue) < Math.abs(value)) {
-            peakValue = value;
-        }
-        energy += value * value;
-        numberOfPoints++;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public int getWidth() {
-        return numberOfPoints;
+    public long getEndTime() {
+        return startTime + duration;
     }
 
-    public int getPeakValue() {
-        return peakValue;
+    public long getDuration() {
+        return duration;
     }
 
-    public int getStartIndex() {
-        return startIndex;
+    public int getValue() {
+        return value;
     }
-
-    public int getEndIndex() {
-        return startIndex + numberOfPoints - 1;
-    }
-
-    public int getRatioToNoise() {
-        return (int)Math.sqrt(energy / (noiseLevel * noiseLevel));
-    }
-
-    private boolean isEqualSign(int a, int b) {
-        if ((a >= 0) && (b >= 0)) {
-            return true;
-        }
-
-        if ((a <= 0) && (b <= 0)) {
-            return true;
-        }
-
-        return false;
-    }
-
 }

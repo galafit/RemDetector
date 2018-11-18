@@ -7,7 +7,7 @@ package data;
  *  indexValue = index * stepInterval + startOffset
  *  where:
  *  stepInterval = getScaling().getSamplingInterval();
- *  startOffset = getScaling().getStart();
+ *  startOffset = getScaling().getStartTime();
  *
  *  dataValue(indexValue) = get(index) * gain + offset
  *  where:

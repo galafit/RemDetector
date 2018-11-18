@@ -11,7 +11,7 @@ import graph.GraphType;
 import graph.GraphViewer;
 import graph.colors.TestColorSelector;
 import gui.MainWindow;
-import rem.saccade.SaccadeDetector;
+import rem.saccade.SaccadeGroupDetector;
 
 
 /**
@@ -143,7 +143,7 @@ public class Presenter implements  ControllerListener {
         DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
 
 
-        SaccadeDetector saccades = new SaccadeDetector(eogFull, true);
+        SaccadeGroupDetector saccadeDetector = new SaccadeGroupDetector(eogFull, true);
 
         graphViewer.addGraphPanel(4, true);
       //  graphViewer.addGraph(new Graph(isSleep, GraphType.BOOLEAN, new BooleanColorSelector(accMovement, accMovementLimit)), CompressionType.BOOLEAN, 0);
@@ -152,11 +152,11 @@ public class Presenter implements  ControllerListener {
 
         graphViewer.addGraphPanel(4, true);
         graphViewer.addGraph(eogDerivativeRem);
-        graphViewer.addGraph(saccades.getThresholds());
+        graphViewer.addGraph(saccadeDetector.getThresholds());
 
 
-        graphViewer.addGraphPanel(2, false);
-        graphViewer.addGraph(saccades);
+        graphViewer.addGraphPanel(4, true);
+        graphViewer.addGraph(saccadeDetector.getSaccades());
 
 
 

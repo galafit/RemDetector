@@ -81,9 +81,9 @@ public class SaccadeBatchDetector implements DataSeries {
             resultHash.put(i, Math.abs(saccade.getPeakValue()));
         }
      /*   DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-        long time = inputData.getStart() + (long) (saccade.getPeakIndex() * 1000 / getSamplingRate());
+        long time = inputData.getStartTime() + (long) (saccade.getPeakIndex() * 1000 / getSamplingRate());
         String timeStamp = dateFormat.format(new Date(time));
-        System.out.println(timeStamp + ": |" + saccade.getWidth() + "| "  + saccade.getPeakToEnergyRatio());   */
+        System.out.println(timeStamp + ": |" + saccade.getDuration() + "| "  + saccade.getPeakToEnergyRatio());   */
 
     }
 

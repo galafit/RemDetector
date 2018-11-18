@@ -20,7 +20,7 @@ public class BooleanAND implements DataSeries {
       /*  if (inputDataList.size() == 0 && inputData.getScaling() != null) {
             scaling = new ScalingImpl();
             scaling.setSamplingInterval(inputData.getScaling().getSamplingInterval());
-            scaling.setStart(inputData.getScaling().getStart());
+            scaling.setStart(inputData.getScaling().getStartTime());
             scaling.setTimeSeries(inputData.getScaling().isTimeSeries());
         }
         if (!isCompatible(getScaling(), inputData.getScaling())) {
