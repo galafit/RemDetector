@@ -21,14 +21,15 @@ public class SaccadeGroupDetector implements SaccadeListener {
 
     private SacadeDetector sacadeDetector;
 
+    private List<GroupInfo> groupInfoList = new ArrayList<>();
     private List<Saccade> saccadeList = new ArrayList<>();
     private HashMap<Integer, Integer> saccadeValues = new HashMap<>();
 
-    private List<Saccade> saccadeGroup = new ArrayList<>();
-    private List<SaccadeGroup> groupList = new ArrayList<>();
-    private SaccadeGroup groupInfo;
+    private List<Saccade> currentGroup = new ArrayList<>();
     private int saccadesInGroupMin = 3;
     private boolean isGroupApproved = false;
+
+
     private SaccadeListener saccadeListener = new NullSaccadeListener();
 
 
@@ -72,12 +73,13 @@ public class SaccadeGroupDetector implements SaccadeListener {
     }
 
     private void addSacadeToGroup(Saccade saccade) {
-        if (saccadeGroup.size() == 0 || saccade.getStartTime() - saccadeGroup.get(saccadeGroup.size() - 1).getEndTime() > SACCADES_DISTANCE_MAX_MS) {
-            saccadeGroup.clear();
-            saccadeGroup.add(saccade);
+        if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_DISTANCE_MAX_MS) {
+            currentGroup.clear();
+            currentGroup.add(saccade);
+            isGroupApproved = false;
         } else {
-            saccadeGroup.add(saccade);
-            if (saccadeGroup.size() == saccadesInGroupMin) {
+            currentGroup.add(saccade);
+            if (currentGroup.size() == saccadesInGroupMin) {
                 approveGroup();
             } else if (isGroupApproved) {
                 addSaccadeToMainList(saccade);
@@ -87,7 +89,8 @@ public class SaccadeGroupDetector implements SaccadeListener {
 
     private void approveGroup() {
         isGroupApproved = true;
-        for (Saccade saccade : saccadeGroup) {
+        groupInfoList.add(new GroupInfo(saccadeList.size()));
+        for (Saccade saccade : currentGroup) {
             addSaccadeToMainList(saccade);
         }
     }
@@ -104,6 +107,7 @@ public class SaccadeGroupDetector implements SaccadeListener {
         for (int i = 0; i < pointsNumber; i++) {
             saccadeValues.put(startIndex + i, saccade.getValue());
         }
+        groupInfoList.get(groupInfoList.size() - 1).addSacade();
         notifyListener(saccade);
     }
 
@@ -160,16 +164,24 @@ public class SaccadeGroupDetector implements SaccadeListener {
         };
     }
 
-    class SaccadeGroup {
-        int firsSaccadeIndex;
+    class GroupInfo {
+        int firstSaccadeIndex;
         int succadesCount;
 
+        public GroupInfo(int firstSaccadeIndex) {
+            this.firstSaccadeIndex = firstSaccadeIndex;
+        }
+
+        public void addSacade() {
+            succadesCount++;
+        }
+
         public long getStartTime() {
-            return saccadeList.get(firsSaccadeIndex).getStartTime();
+            return saccadeList.get(firstSaccadeIndex).getStartTime();
         }
 
         public long getEndTime() {
-            return saccadeList.get(firsSaccadeIndex + succadesCount).getEndTime();
+            return saccadeList.get(firstSaccadeIndex + succadesCount).getEndTime();
         }
     }
 

@@ -4,6 +4,7 @@ import data.DataList;
 import data.DataSeries;
 import data.Scaling;
 import filters.FilterDerivativeRem;
+import filters.HiPassCollectingFilter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -248,7 +249,7 @@ public class SacadeDetector {
     private int noiseLagPoints;
     private int noiseAveragingIntervalMs = 400;
 
-    private int thresholdNoiseRatio = 6; // Threshold to noise ratio
+    private int thresholdNoiseRatio = 7; // Threshold to noise ratio
 
     private boolean isThresholdsCachingEnabled;
     private DataList thresholdList = new DataList();
@@ -300,6 +301,10 @@ public class SacadeDetector {
         saccadeListener = new NullSaccadeListener();
     }
 
+    public void disableDetection(int timeIntervalMs) {
+        disablingIndex = currentIndex;
+        disabledPoints = timeIntervalToPoints(timeIntervalMs);
+    }
 
     /**
      * Noise/threshold is calculated with some delay (noiseLagPoints)
@@ -439,7 +444,7 @@ public class SacadeDetector {
 
 
     private boolean isDetectionDisabled() {
-        if (currentIndex - disablingIndex < disabledPoints) {
+        if (currentIndex - disablingIndex <= disabledPoints) {
             return true;
         }
         // noise buffer data must be completely updated

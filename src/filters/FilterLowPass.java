@@ -12,11 +12,6 @@ public class FilterLowPass extends Function {
     private int indexBefore = -10;
     private long sumBefore = 0;
 
-    public FilterLowPass(DataSeries inputData, int bufferSize) {
-        super(inputData);
-        this.bufferSize = bufferSize;
-    }
-
     public FilterLowPass(DataSeries inputData, double cutOffFrequency) {
         super(inputData);
         double frequency = 1;

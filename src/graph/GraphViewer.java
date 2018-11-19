@@ -181,7 +181,7 @@ public class GraphViewer extends JPanel{
 
 
     public void addGraph(final DataSeries graph) {
-        addGraph(graph, GraphType.VERTICAL_LINE, CompressionType.AVERAGE);
+        addGraph(graph, GraphType.LINE, CompressionType.AVERAGE);
     }
 
     public void addPreview(final DataSeries preview,  final CompressionType compressionType) {

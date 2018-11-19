@@ -130,20 +130,21 @@ public class Presenter implements  ControllerListener {
 
 
     private void sasha(RemDataStore remDataStore) {
-        int eogCutOffPeriod = 10; //sec. to remove steady component (cutoff_frequency = 1/cutoff_period )
+        double eogCutOffInterval = 10; //sec. to remove steady component (cutoff_frequency = 1/cutoff_period )
         DataSeries eogFull = remDataStore.getEog1Data();
-        DataSeries eog = new HiPassCollectingFilter(eogFull, eogCutOffPeriod);
+        DataSeries eog = new HiPassCollectingFilter(eogFull, eogCutOffInterval);
         DataSeries accMovement = remDataStore.getAccMovementData();
         DataSeries isSleep = remDataStore.isSleep();
 
         double accMovementLimit = remDataStore.getAccMovementLimit();
 
-        FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eogFull);
-        //DataSeries eogDerivativeRem =  new FilterLowPass(new FilterDerivativeRem(eogFull), 25.0);
+        FilterDerivativeRem eogDerivativeRem =  new FilterDerivativeRem(eog);
         DataSeries eogDerivativeRemAbs =  new Abs(eogDerivativeRem);
 
 
-        SaccadeGroupDetector saccadeDetector = new SaccadeGroupDetector(eogFull, true);
+        SaccadeGroupDetector saccadeDetector = new SaccadeGroupDetector(eog, true);
+
+        DataSeries saccades = saccadeDetector.getSaccades();
 
         graphViewer.addGraphPanel(4, true);
       //  graphViewer.addGraph(new Graph(isSleep, GraphType.BOOLEAN, new BooleanColorSelector(accMovement, accMovementLimit)), CompressionType.BOOLEAN, 0);
@@ -156,7 +157,7 @@ public class Presenter implements  ControllerListener {
 
 
         graphViewer.addGraphPanel(4, true);
-        graphViewer.addGraph(saccadeDetector.getSaccades());
+        graphViewer.addGraph(saccades);
 
 
 
@@ -166,8 +167,12 @@ public class Presenter implements  ControllerListener {
   //      graphViewer.addGraph(new Constant(accMovement, accMovementLimit));
 
         graphViewer.addPreviewPanel(2, false);
+        graphViewer.addPreview(new Abs(saccades), CompressionType.MAX);
+
+        graphViewer.addPreviewPanel(2, false);
         graphViewer.addPreview(eogDerivativeRemAbs, CompressionType.MAX);
         graphViewer.addPreview(isSleep, GraphType.BOOLEAN, CompressionType.BOOLEAN);
+
     }
 
 }
