@@ -148,7 +148,7 @@ public class Presenter implements  ControllerListener {
 
         graphViewer.addGraphPanel(4, true);
       //  graphViewer.addGraph(new Graph(isSleep, GraphType.BOOLEAN, new BooleanColorSelector(accMovement, accMovementLimit)), CompressionType.BOOLEAN, 0);
-        graphViewer.addGraph(new Graph(eog, GraphType.VERTICAL_LINE, new TestColorSelector()), CompressionType.AVERAGE, 0);
+        graphViewer.addGraph(eog, GraphType.VERTICAL_LINE, CompressionType.AVERAGE);
 
 
         graphViewer.addGraphPanel(4, true);
@@ -157,7 +157,8 @@ public class Presenter implements  ControllerListener {
 
 
         graphViewer.addGraphPanel(4, true);
-        graphViewer.addGraph(saccades);
+        graphViewer.addGraph(saccades, GraphType.BAR, CompressionType.MAX);
+        //graphViewer.addGraph(saccades);
 
 
 

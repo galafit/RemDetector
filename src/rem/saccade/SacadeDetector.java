@@ -249,7 +249,7 @@ public class SacadeDetector {
     private int noiseLagPoints;
     private int noiseAveragingIntervalMs = 400;
 
-    private int thresholdNoiseRatio = 7; // Threshold to noise ratio
+    private int thresholdNoiseRatio = 6; // Threshold to noise ratio
 
     private boolean isThresholdsCachingEnabled;
     private DataList thresholdList = new DataList();
@@ -278,13 +278,13 @@ public class SacadeDetector {
         saccadeDurationMaxPoints = timeIntervalToPoints(SACCADE_DURATION_MAX_MS);
         disabledPoints = timeIntervalToPoints(DEFAULT_START_DISABLED_INTERVAL_MS);
 
-        noiseLagPoints = 10;
+        noiseLagPoints = 5;
 
         int noiseAveragingIntervalPoints = timeIntervalToPoints(noiseAveragingIntervalMs);
         if(noiseAveragingIntervalPoints < 1) {
             noiseAveragingIntervalPoints = 1;
         }
-        noiseDetector = new EnergyNoiseDetector(eogDerivative, noiseAveragingIntervalPoints);
+        noiseDetector = new EnergyNoiseDetector(new FilterDerivativeRem(eogDerivative, eogDerivativeIntervalMs), noiseAveragingIntervalPoints);
         zeroDetector = new LinearNoiseDetector(eogDerivative, zeroPointsNumber);
         this.isThresholdsCachingEnabled = isThresholdsCachingEnabled;
         saccadeListener = new NullSaccadeListener();
@@ -382,18 +382,18 @@ public class SacadeDetector {
                     }
 
                     // find saccade end (has sense in the case of joined big saccade with 2 peaks)
-                    /*for (int endIndex = currentSaccadeInfo.getPeakIndex() + 1; endIndex <= currentIndex; endIndex++) {
-                        if(currentSaccadeInfo.addToEnd(eogDerivative.get(endIndex), endIndex)) {
-                            handleSaccade(currentSaccadeInfo);
-                            currentSaccadeInfo = null;
-                        }
-                    }*/
+                    int endIndex = currentSaccadeInfo.getPeakIndex() + 1;
+                    while (!currentSaccadeInfo.addToEnd(eogDerivative.get(endIndex), endIndex) && endIndex < currentIndex) {
+                        endIndex++;
+                    }
                 }
             } else {
                 if(currentSaccadeInfo.addToEnd(dataValue, currentIndex)) { // saccade detection finished
-                   handleSaccade(currentSaccadeInfo);
-                   currentSaccadeInfo = null;
+                    handleSaccade(currentSaccadeInfo);
+                    currentSaccadeInfo = null;
                 }
+
+
             }
         }
     }
@@ -489,6 +489,7 @@ public class SacadeDetector {
 
 
     class SaccadeInfo {
+        private int peakFactor = 7;
         private int startIndex = -1;
         private int endIndex = -1;
         private int peakIndex = -1;
@@ -516,7 +517,7 @@ public class SacadeDetector {
             saccadeInfoNew.endIndex = endIndex;
 
             int delta = Math.min(peakIndex - startIndex, endIndex - peakIndex);
-            if(delta > 0) {
+            if(delta > 1) {
                 saccadeInfoNew.startIndex = peakIndex - delta;
                 saccadeInfoNew.endIndex = peakIndex + delta;
             }
@@ -555,6 +556,7 @@ public class SacadeDetector {
                 String msg = "Index = "+index + " Expected < already detected startIndex: " + startIndex;
                 throw new IllegalArgumentException(msg);
             }
+            startIndex = index + 1;
             if(!isEqualSign(value, startValue)) {
                 return true;
             }
@@ -575,6 +577,7 @@ public class SacadeDetector {
                 String msg = "Index = "+index + " Expected > already detected endIndex: " + endIndex;
                 throw new IllegalArgumentException(msg);
             }
+            endIndex = index - 1;
             if(!isEqualSign(value, endValue)) {
                 return true;
             }
@@ -582,7 +585,7 @@ public class SacadeDetector {
             if(Math.abs(value) >= Math.abs(endValue)) {
                 return true;
             }
-            if(Math.abs(value) <= noiseLevel) {
+             if(Math.abs(value) <= noiseLevel) {
                 return true;
             }
             endValue = value;
