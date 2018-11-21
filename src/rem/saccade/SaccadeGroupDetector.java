@@ -11,9 +11,12 @@ import java.util.List;
  * Saccades always appear in group.
  * Single saccades are not taken into account
  */
-public class SaccadeGroupDetector implements SaccadeListener {
-    private static final int SACCADES_DISTANCE_MAX_MS = 6000;
-    private static final int SACCADES_DISTANCE_MIN_MS = 200;
+public class SaccadeGroupDetector {
+    private static final int SACCADES_INTERVAL_MAX = 6000;
+    private static final int SACCADES_INTERVAL_MIN = 200;
+
+    private static final int SACCADES_HALF_INTERVAL_MIN = SACCADES_INTERVAL_MIN / 2;
+    private static final int SACCADES_INTERVAL_MAX_AND_HALF = SACCADES_INTERVAL_MAX * 3 / 2;
 
     private DataSeries eogData;
     private long dataIntervalMs;
@@ -29,9 +32,7 @@ public class SaccadeGroupDetector implements SaccadeListener {
     private int saccadesInGroupMin = 3;
     private boolean isGroupApproved = false;
 
-
     private SaccadeListener saccadeListener = new NullSaccadeListener();
-
 
     public SaccadeGroupDetector(DataSeries eogData) {
         this(eogData, false);
@@ -40,21 +41,15 @@ public class SaccadeGroupDetector implements SaccadeListener {
     public SaccadeGroupDetector(DataSeries eogData, boolean isThresholdsCachingEnabled) {
         this.eogData = eogData;
         sacadeDetector = new SacadeDetector(eogData, isThresholdsCachingEnabled);
-        sacadeDetector.setSaccadeListener(this);
-
         dataIntervalMs = Math.round(eogData.getScaling().getSamplingInterval() * 1000);
         dataStartMs = Math.round(eogData.getScaling().getStart());
 
-        int noiseDB1 = (int) (10 * Math.log10(6 * 6));
-        int noiseDB2 = (int) (10 * Math.log10(8 * 8));
-        int noiseDB3 = (int) (10 * Math.log10(9 * 9));
-        System.out.println("db ratio " + noiseDB1 + " " + noiseDB2 + "  " + noiseDB3);
-
-        noiseDB1 = (int) (10 * Math.log10(10 * 10));
-        noiseDB2 = (int) (10 * Math.log10(20 * 20));
-        noiseDB3 = (int) (10 * Math.log10(30 * 30));
-        System.out.println("db ratio " + noiseDB1 + " " + noiseDB2 + "  " + noiseDB3);
-
+        sacadeDetector.setSaccadeListener(new SaccadeListener() {
+            @Override
+            public void onSaccadeDetected(Saccade saccade) {
+                addSacadeToGroup(saccade);
+            }
+        });
     }
 
     public void setSaccadeListener(SaccadeListener saccadeListener) {
@@ -67,24 +62,154 @@ public class SaccadeGroupDetector implements SaccadeListener {
         saccadeListener = new NullSaccadeListener();
     }
 
-    @Override
-    public void onSaccadeDetected(Saccade saccade) {
-        addSacadeToGroup(saccade);
+    public int groupsCount() {
+        return groupInfoList.size();
     }
 
+    /**
+     * get group start time in milliseconds
+     */
+    public long getGroupStartTime(int groupNumber) {
+        return groupInfoList.get(groupNumber).getStartTime();
+    }
+
+    /**
+     * get group end time in milliseconds
+     */
+    public long getGroupEndTime(int groupNumber) {
+        return groupInfoList.get(groupNumber).getEndTime();
+    }
+
+
+    public int saccadesCountInGroup(int groupNumber) {
+        return groupInfoList.get(groupNumber).saccadesCount();
+    }
+
+
     private void addSacadeToGroup(Saccade saccade) {
-        if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_DISTANCE_MAX_MS) {
+        // debug version without selection wrong groups
+       /* if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_INTERVAL_MAX) {
+            currentGroup.clear();
+            currentGroup.add(saccade);
+        } else {
+            currentGroup.add(saccade);
+            if(currentGroup.size() == saccadesInGroupMin) {
+                approveGroup();
+            }
+            if(currentGroup.size() > saccadesInGroupMin){
+                addSaccadeToMainList(saccade);
+            }
+        }*/
+
+        if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_INTERVAL_MAX) {
             currentGroup.clear();
             currentGroup.add(saccade);
             isGroupApproved = false;
         } else {
             currentGroup.add(saccade);
-            if (currentGroup.size() == saccadesInGroupMin) {
-                approveGroup();
-            } else if (isGroupApproved) {
+            if (!checkIfLast4SaccadesOk()) {
+                currentGroup.clear();
+                sacadeDetector.disableDetection(sacadeDetector.getNoiseAveragingInterval());
+                isGroupApproved = false;
+            }
+            if (!isGroupApproved) {
+                if (currentGroup.size() >= saccadesInGroupMin) {
+                    // supposed that if group  size >= 4 and every on adding every saccade
+                    // checkIfLast3SaccadesOk() and checkIfLast4SaccadesOk() were true
+                    // then group can be approved by default
+                    if (currentGroup.size() < 4) {
+                        if (checkIfGroupCanBeApproved()) {
+                            approveGroup();
+                        }
+                    } else {
+                        approveGroup();
+                    }
+                }
+            }
+
+            if (isGroupApproved) {
                 addSaccadeToMainList(saccade);
             }
         }
+    }
+
+    /**
+     * in the case of 3 close saccades (all saccade intervals < SACCADES_INTERVAL_MIN)
+     * we will not approve the group and wait the 4-th saccade
+     */
+    private boolean checkIfGroupCanBeApproved() {
+        return checkIfLastNSaccadesHasMinDistance(Math.min(currentGroup.size(), 4));
+    }
+
+    private boolean checkIfLast3SaccadesOk() {
+        final int count = 3;
+
+        if (currentGroup.size() < count) {
+            return true;
+        }
+
+        int startIndex = currentGroup.size() - count;
+
+        // check if all saccades are too close
+        boolean isTooClose = true;
+        for (int i = startIndex; i < startIndex + count - 1; i++) {
+            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() > SACCADES_HALF_INTERVAL_MIN) {
+                isTooClose = false;
+                break;
+            }
+        }
+
+        if (isTooClose) {
+            // check sine "pattern" (plus-minus-plus or minus-plus-minus) [impossible for close saccades]
+            // Groups of close saccades almost always have the same direction.
+            // "The movement of the eyes usually undershoots the target and requires another
+            // small saccade in the same direction to reach it.
+            // Overshooting of the target is uncommon in normal subjects."
+
+            int value1 = currentGroup.get(startIndex).getValue();
+            int value2 = currentGroup.get(startIndex + 1).getValue();
+            int value3 = currentGroup.get(startIndex + 2).getValue();
+
+
+            if (!isEqualSign(value1, value2) && isEqualSign(value1, value3)) { // sine pattern
+                return false;
+            }
+        }
+
+        // check if the saccades are too far from each other
+        if (currentGroup.get(startIndex + count - 1).getStartTime() - currentGroup.get(startIndex).getStartTime() < SACCADES_INTERVAL_MAX_AND_HALF) {
+            return true;
+        }
+
+        return true;
+    }
+
+    private boolean checkIfLast4SaccadesOk() {
+        if(currentGroup.size() < 3) {
+            return true;
+        }
+
+        if(!checkIfLast3SaccadesOk()) {
+            return false;
+        }
+
+        if(currentGroup.size() > 3) {
+            return checkIfLastNSaccadesHasMinDistance(4);
+        }
+
+        return true;
+    }
+
+    private boolean checkIfLastNSaccadesHasMinDistance(int n) {
+        int startIndex = currentGroup.size() - n;
+
+        // check if at least one inter saccade interval >= SACCADES_INTERVAL_MIN
+        for (int i = startIndex; i < startIndex + n - 1; i++) {
+            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() >= SACCADES_INTERVAL_MIN) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void approveGroup() {
@@ -99,7 +224,6 @@ public class SaccadeGroupDetector implements SaccadeListener {
         saccadeListener.onSaccadeDetected(saccade);
     }
 
-
     private void addSaccadeToMainList(Saccade saccade) {
         saccadeList.add(saccade);
         int startIndex = (int) ((saccade.getStartTime() - dataStartMs) / dataIntervalMs);
@@ -109,6 +233,19 @@ public class SaccadeGroupDetector implements SaccadeListener {
         }
         groupInfoList.get(groupInfoList.size() - 1).addSacade();
         notifyListener(saccade);
+    }
+
+
+    private boolean isEqualSign(int a, int b) {
+        if ((a >= 0) && (b >= 0)) {
+            return true;
+        }
+
+        if ((a <= 0) && (b <= 0)) {
+            return true;
+        }
+
+        return false;
     }
 
     public void update() {
@@ -176,12 +313,16 @@ public class SaccadeGroupDetector implements SaccadeListener {
             succadesCount++;
         }
 
+        public int saccadesCount() {
+            return succadesCount;
+        }
+
         public long getStartTime() {
             return saccadeList.get(firstSaccadeIndex).getStartTime();
         }
 
         public long getEndTime() {
-            return saccadeList.get(firstSaccadeIndex + succadesCount).getEndTime();
+            return saccadeList.get(firstSaccadeIndex + succadesCount - 1).getEndTime();
         }
     }
 
