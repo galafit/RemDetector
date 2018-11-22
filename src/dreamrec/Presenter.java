@@ -151,8 +151,8 @@ public class Presenter implements  ControllerListener {
         graphViewer.addGraph(eog, GraphType.VERTICAL_LINE, CompressionType.AVERAGE);
 
 
-        graphViewer.addGraphPanel(4, false);
-        graphViewer.addGraph(eogDerivativeRemAbs);
+        graphViewer.addGraphPanel(4, true);
+        graphViewer.addGraph(eogDerivativeRem);
         graphViewer.addGraph(saccadeDetector.getThresholds());
 
 

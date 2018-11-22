@@ -12,13 +12,12 @@ import java.util.List;
  * Single saccades are not taken into account
  */
 public class SaccadeGroupDetector {
-    private static final int SACCADES_INTERVAL_MAX = 6000;
-    private static final int SACCADES_INTERVAL_MIN = 200;
+    private int saccadesIntervalMax = SacadeDetector.FIXATION_MAX_MS;
+    private int saccadesIntervalMin = SacadeDetector.FIXATION_MIN_MS;
 
-    private static final int SACCADES_HALF_INTERVAL_MIN = SACCADES_INTERVAL_MIN / 2;
-    private static final int SACCADES_INTERVAL_MAX_AND_HALF = SACCADES_INTERVAL_MAX * 3 / 2;
+    private int saccadesIntervalHalfMin = saccadesIntervalMin / 2;
+    private int saccadesIntervalMaxAndHalf = saccadesIntervalMax * 3 / 2;
 
-    private DataSeries eogData;
     private long dataIntervalMs;
     private long dataStartMs;
 
@@ -34,22 +33,34 @@ public class SaccadeGroupDetector {
 
     private SaccadeListener saccadeListener = new NullSaccadeListener();
 
+    public SaccadeGroupDetector(DataSeries eogData, boolean isThresholdsCachingEnabled) {
+        this(new SacadeDetector(eogData, isThresholdsCachingEnabled));
+    }
+
     public SaccadeGroupDetector(DataSeries eogData) {
         this(eogData, false);
     }
 
-    public SaccadeGroupDetector(DataSeries eogData, boolean isThresholdsCachingEnabled) {
-        this.eogData = eogData;
-        sacadeDetector = new SacadeDetector(eogData, isThresholdsCachingEnabled);
-        dataIntervalMs = Math.round(eogData.getScaling().getSamplingInterval() * 1000);
-        dataStartMs = Math.round(eogData.getScaling().getStart());
+    public SaccadeGroupDetector(SacadeDetector sacadeDetector) {
+        this.sacadeDetector = sacadeDetector;
+        dataIntervalMs = sacadeDetector.getDataIntervalMs();
+        dataStartMs = sacadeDetector.getDataStartTimeMs();
 
-        sacadeDetector.setSaccadeListener(new SaccadeListener() {
+        this.sacadeDetector.setSaccadeListener(new SaccadeListener() {
             @Override
             public void onSaccadeDetected(Saccade saccade) {
                 addSacadeToGroup(saccade);
             }
         });
+    }
+
+    /**
+     * Set min number of saccades in every group.
+     * Best values: 3 - 4. Default - 3
+     * @param saccadesInGroupMin min number of saccades in group
+     */
+    public void setSaccadesInGroupMin(int saccadesInGroupMin) {
+        this.saccadesInGroupMin = saccadesInGroupMin;
     }
 
     public void setSaccadeListener(SaccadeListener saccadeListener) {
@@ -87,8 +98,8 @@ public class SaccadeGroupDetector {
 
 
     private void addSacadeToGroup(Saccade saccade) {
-        // debug version without selection wrong groups
-       /* if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_INTERVAL_MAX) {
+        // debug version where all groups with number of saccade >= saccadesInGroupMin will be approved
+       /* if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > saccadesIntervalMax) {
             currentGroup.clear();
             currentGroup.add(saccade);
         } else {
@@ -101,7 +112,7 @@ public class SaccadeGroupDetector {
             }
         }*/
 
-        if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > SACCADES_INTERVAL_MAX) {
+        if (currentGroup.size() == 0 || saccade.getStartTime() - currentGroup.get(currentGroup.size() - 1).getEndTime() > saccadesIntervalMax) {
             currentGroup.clear();
             currentGroup.add(saccade);
             isGroupApproved = false;
@@ -109,7 +120,7 @@ public class SaccadeGroupDetector {
             currentGroup.add(saccade);
             if (!checkIfLast4SaccadesOk()) {
                 currentGroup.clear();
-                sacadeDetector.disableDetection(sacadeDetector.getNoiseAveragingInterval());
+                sacadeDetector.disableDetection(sacadeDetector.getThresholdAvgIntervalMs());
                 isGroupApproved = false;
             }
             if (!isGroupApproved) {
@@ -134,7 +145,7 @@ public class SaccadeGroupDetector {
     }
 
     /**
-     * in the case of 3 close saccades (all saccade intervals < SACCADES_INTERVAL_MIN)
+     * in the case of 3 close saccades (all saccade intervals < saccadesIntervalMin)
      * we will not approve the group and wait the 4-th saccade
      */
     private boolean checkIfGroupCanBeApproved() {
@@ -153,7 +164,7 @@ public class SaccadeGroupDetector {
         // check if all saccades are too close
         boolean isTooClose = true;
         for (int i = startIndex; i < startIndex + count - 1; i++) {
-            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() > SACCADES_HALF_INTERVAL_MIN) {
+            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() > saccadesIntervalHalfMin) {
                 isTooClose = false;
                 break;
             }
@@ -177,7 +188,7 @@ public class SaccadeGroupDetector {
         }
 
         // check if the saccades are too far from each other
-        if (currentGroup.get(startIndex + count - 1).getStartTime() - currentGroup.get(startIndex).getStartTime() < SACCADES_INTERVAL_MAX_AND_HALF) {
+        if (currentGroup.get(startIndex + count - 1).getStartTime() - currentGroup.get(startIndex).getStartTime() < saccadesIntervalMaxAndHalf) {
             return true;
         }
 
@@ -203,10 +214,21 @@ public class SaccadeGroupDetector {
     private boolean checkIfLastNSaccadesHasMinDistance(int n) {
         int startIndex = currentGroup.size() - n;
 
-        // check if at least one inter saccade interval >= SACCADES_INTERVAL_MIN
+        boolean isOk = false;
+        // check if at least one one interval between saccades >= saccadesIntervalHalfMin
         for (int i = startIndex; i < startIndex + n - 1; i++) {
-            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() >= SACCADES_INTERVAL_MIN) {
-                return true;
+            if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getEndTime() >= saccadesIntervalHalfMin) {
+                isOk = true;
+                break;
+            }
+        }
+
+        if(isOk) {
+            // check if at least one interval between saccades peak >= saccadesIntervalMin
+            for (int i = startIndex; i < startIndex + n - 1; i++) {
+                if (currentGroup.get(i + 1).getStartTime() - currentGroup.get(i).getStartTime() >= saccadesIntervalMin) {
+                    return true;
+                }
             }
         }
         return false;
@@ -282,7 +304,7 @@ public class SaccadeGroupDetector {
             @Override
             public int size() {
                 update();
-                return eogData.size();
+                return sacadeDetector.getDataSize();
             }
 
             @Override
@@ -296,7 +318,7 @@ public class SaccadeGroupDetector {
 
             @Override
             public Scaling getScaling() {
-                return eogData.getScaling();
+                return sacadeDetector.getDataScaling();
             }
         };
     }
