@@ -12,19 +12,17 @@ import java.text.SimpleDateFormat;
  * * *********************************************************
  * *                  SACCADE AYE MOVEMENTS                  *
  * ***********************************************************
- * <p>
+ *
  * Humans and many animals do not look at a scene in fixed steadiness and
  * eye moves not with a smooth, steady movements, but instead, in a series of little rapid jumps (Saccades)
  * separated by pauses - brief periods of relative stability or slow phase movements (Fixations)
  * <p/>
  * !!! On average, a second humans make 2–3 saccades a second.!!!
- * <p>
  * <p/>
  * So SACCADE is quick, simultaneous movement of both eyes between two phases of fixation
  * (from one fixation point to another)
  * The parameters commonly employed in the analysis of saccadic performance are
  * <b>amplitude</b>, the <b>maximum angular eogDerivative</b>, <b>duration</b>, and <b>latency</b>.
- * <p>
  * <p/>
  * SACCADE AMPLITUDES: ranges of 1 - 100°/s.
  * The amplitude of a saccade is the angular distance the eye travels during the movement.
