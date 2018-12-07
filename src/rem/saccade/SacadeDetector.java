@@ -16,99 +16,10 @@ import java.text.SimpleDateFormat;
  * Humans and many animals do not look at a scene in fixed steadiness and
  * eye moves not with a smooth, steady movements, but instead, in a series of little rapid jumps (Saccades)
  * separated by pauses - brief periods of relative stability or slow phase movements (Fixations)
- * <p/>
- * !!! On average, a second humans make 2–3 saccades a second.!!!
- * <p/>
- * So SACCADE is quick, simultaneous movement of both eyes between two phases of fixation
- * (from one fixation point to another)
- * The parameters commonly employed in the analysis of saccadic performance are
- * <b>amplitude</b>, the <b>maximum angular eogDerivative</b>, <b>duration</b>, and <b>latency</b>.
- * <p/>
- * SACCADE AMPLITUDES: ranges of 1 - 100°/s.
- * The amplitude of a saccade is the angular distance the eye travels during the movement.
- * Under natural conditions most saccades (83%) are smaller than 15°,
- * 99% of all eye movements smaller then 30° and are within 15 degrees of primary position.
- * In  the  EOG  technique  it is  difficult to measure  saccades  less then  1-2  degree
- * since  the  noise inherent.
- * <p>
- * <br>See: <a href="http://www.cis.rit.edu/pelz/lab/papers/malinov_epelboim_et_al_saccades_vergence_look-tap.pdf">
- * Characteristics of saccades</a>
- * <p>
- * <p/>
- * !! Saccades larger than about 20° is accompanied by a head movement !!
- * <p>
- * <p>
- * <p/>
- * SACCADE PEAK VELOCITY: 50 - 1000 degrees/s (normally 300 - 600)
- * Peak Velocity  is the highest eogDerivative reached during the saccade.
- * For amplitudes up to 15 or 20°, the eogDerivative of a saccade linearly depends on the amplitude -
- * <b>saccadic main sequence</b>. But rather different equations are given by different authors:
- * <ul>
- * <li>DURATION[ms] = 21ms + 2.2 * AMPLITUDE[degrees]</li>
- * <li>DURATION[ms] = 37ms + 2.7 * AMPLITUDE[degrees]</li>
- * <li>DURATION[ms] = 38ms + 2 * AMPLITUDE[degrees]</li>
- * </ul>
- * <p>
- * For amplitudes larger than 20°, the peak eogDerivative starts to plateau
- * toward the asymptotic maximum (700° - 900°).
- * Actually for amplitudes more than 30 ° peak eogDerivative is almost independent of the saccade size.
- * For instance, a 10° amplitude is associated with a eogDerivative of 300°/s, and 30° is associated with 500-600°/s
- * Thus although big saccades ( 40-60°) exist and its max speed can reach 700°/s
- * the major (99% )of saccades are less then 30°.
- * <p>
- * (See: <a href="https://www.liverpool.ac.uk/~pcknox/teaching/Eymovs/params.htm">The parameters of eye movement</a>
- * and <a href = "https://www.researchgate.net/post/What_is_the_average_duration_for_saccades_with_36_and_54_of_amplitude">
- * average duration for saccades with 36º and 54º of amplitude</a>
- * <br>
- * PEAK_VELOCITY_MAX = 1000 °/s
- * <p>
- * <p>
- * <p/>
- * SACCADE DURATION:  20-200ms (Most of them 30-80ms).
- * Saccade duration depends on their amplitude.
- * For example:  2.5° - 37ms, 5° - 45ms,  10° - 55ms... (±10ms).
- * In language reading - 20–30 ms is typical.
- * As was said with EOG we can measure only saccades bigger then 1-2 degree
- * it is logical to assume that
- * <br>
- * SACCADE_DURATION_MIN = 37-40 ms
- * <p>
- * <p>
- * <p/>
- * But we need take into account that  it was found that a big main saccade
- * is frequently followed by a second smaller corrective saccade or
- * slow drifting eye movement (Glissade) that brings the eye closer to the target
- * (See http://sysengr.engr.arizona.edu/publishedPapers/Glissades.pdf)
- * <p>
- * !! The movement of the eyes usually undershoots the target and requires another
- * small saccade in the same direction to reach it.
- * Overshooting of the target is uncommon in normal subjects.!!!
- * (http://www.bem.fi/book/28/28.htm)
- * <p>
- * This corrective saccades can occur almost immediately and
- * merging with the main saccade so the resultant eye movement can have duration till
- * 300-400ms.
- * <p>
- * Another thing: "eye calibration" (max movement Right-Left) also take time about 400-500ms.
- * So summarizing all these cases we can accept:
- * <br>
- * SACCADE_DURATION_MAX_MS = 500 ms
- * <p>
- * <p>
- * <p/>
- * SACCADE LATENCY: 100-350 ms (normally 200ms)
- * Latency - this is the time taken from the appearance of a target
- * to the beginning of a saccade in response to that target.
- * The latency for most medium amplitude saccades (5°-10°) is usually around 200ms.
- * However, it can be as low as 100ms (see ), or as high as 350ms.
- * In respoce to to an unexpected stimulus or when the target moves suddenly or appear
- * there is a delay of about 200 ms before the eye begins to move to the new target position.
- * <p>
+ *
  * <p/>
  * FIXATIONS: 50ms - 6s (normally 200-600ms)
- * Humans (and other animals with a fovea) typically alternate Saccades and visual Fixations.
- * (The notable exception is Smooth Pursuit -  eye movements that allow the eyes to closely follow a moving object)
- * So almost always before and after every saccade should be a short period of relative tranquility.
+ * Almost always before and after every saccade should be a short period of relative tranquility.
  * Fixations differ in their length but tend to be for about 200-600ms,
  * although much longer and shorter fixations can occur:
  * <ul>
@@ -119,38 +30,115 @@ import java.text.SimpleDateFormat;
  * Thus:
  * <br>FIXATION_NORMAL = 600 - 1000 ms
  * <br>FIXATION_MAX = 5-6 sec
- * <br>FIXATION_MIN = 50 - 100 - 200 ms (can be seen in the case of subsequent corrective saccade)
- * <p>
+ * <br>FIXATION_MIN = 50 - 100 - 200 ms (50-100ms can be seen in the case of subsequent corrective saccade)
+ *
  * <p/>
- * <br>Small saccade: 3-5°,  duration 30-40ms, peak eogDerivative 150-250 deg/sec
- * <br>Big saccade: 10-30°, duration 40-100ms, peak eogDerivative 300-500 deg/sec
- * <br>Typical big saccade: 20°, duration 80ms, peak eogDerivative 400 deg/sec
- * <br>VERY BIG saccade: 50-60°, duration 100ms, peak eogDerivative 600-700 deg/sec
- * <br><br>
- * (see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1401908/?page=4,
- * https://en.wikipedia.org/wiki/Saccade#/media/File:Saccadic_main_sequence.svg)
+ * !!! On average, a second humans make 2–3 saccades a second.!!!
+ *
  * <p/>
+ * SACCADE is quick, simultaneous movement of both eyes between two phases of fixation
+ * (from one fixation point to another)
+ * The parameters commonly employed in the analysis of saccadic performance are
+ * <b>amplitude</b>, the <b>maximum angular velocity</b>, <b>duration</b>, and <b>latency</b>.
+ *
+ * <p/>
+ * SACCADE LATENCY: 100-350 ms (normally 200ms)
+ * Latency is the time taken from the appearance of a target
+ * to the beginning of a saccade in response to that target.
+ * The latency for most medium amplitude saccades (5°-10°) is usually around 200ms.
+ * However, it can be as low as 100ms (see ), or as high as 350ms.
+ *
+ * <p/>
+ * SACCADE AMPLITUDES: ranges of 1 - 100°. (int EOG main part: 2 - 30°)
+ * The amplitude of a saccade is the angular distance the eye travels during the movement.
+ * Under natural conditions most saccades (83%) are smaller than 15°,
+ * 99% of all eye movements smaller then 30° and are within 15 degrees of primary position.
+ * In  the  EOG  technique  it is  difficult to measure  saccades  less then  1-2  degree
+ * since  the  noise inherent.
+ *
+ * <p/>
+ * SACCADE DURATION:  20-200ms (main part: 30-80ms).
+ * Saccade duration depends on their amplitude.
+ * For example:  2.5° - 37ms, 5° - 45ms,  10° - 55ms... (±10ms).
+ * Since in EOG we can measure only saccades bigger then 1-2 degree
+ * it is logical to assume that
+ * <br>
+ * SACCADE_DURATION_MIN = 40 ms
+ * <p/>
+ * To calculate saccade max duration we must taken into account that:
+ * <ul>
+ *     <li>"eye calibration" (max movement Right-Left) take time about 400-500ms</li>
+ *     <li>in reality exist also <b>pursuit eye movements</b> when ayes follow a moving object
+ *      and saccades can be superimposed on that smooth motion.</li>
+ *     <li>a big main saccade is frequently followed by a second smaller corrective saccade
+ *     or more slow movement that brings the eye closer to the target.
+ *     (Glissades - slow or fast correcting eye movements occasionally seen
+ *     at the end of saccadic eye movements and that has duration about 130ms and latency 120ms). </li>
+ * </ul>
+ * Two saccades or saccade + glisse can merge into one movement with duration till 600-700ms
+ * <br>
+ * SACCADE_DURATION_MAX_MS = 700 ms
+ *
  * <p>
+ * !! The movement of the eyes usually undershoots the target and requires another
+ * small saccade in the same direction to reach it.
+ * Overshooting of the target is uncommon in normal subjects.!!!
+ * (http://www.bem.fi/book/28/28.htm)
+ * <p>
+ *
+ * <p/>
+ * SACCADE PEAK VELOCITY: 50 - 1000 degrees/s (normally 300 - 600)
+ * Peak Velocity  is the highest eogDerivative reached during the saccade.
+ * For amplitudes up to 15 or 20°, the eogDerivative of a saccade linearly depends on the amplitude -
+ * <b>saccadic main sequence</b>. But rather different equations are given by different authors:
+ * <ul>
+ * <li>DURATION[ms] = 21ms + 2.2 * AMPLITUDE[degrees]</li>
+ * <li>DURATION[ms] = 37ms + 2.7 * AMPLITUDE[degrees]</li>
+ * <li>DURATION[ms] = 38ms + 2 * AMPLITUDE[degrees]</li>
+ * </ul>
+ * For amplitudes larger than 20°, the peak eogDerivative starts to plateau
+ * toward the asymptotic maximum (700° - 900°). For amplitudes more than 30 ° peak velocity
+ * is almost independent of the saccade size:
+ * <br> 3-5° saccade:  duration 30-40ms, peak velocity 150-250 deg/sec
+ * <br> 10° saccade: duration 50-60ms, peak velocity 300°/s
+ * <br> 20° saccade: duration 80ms, peak velocity 400°/s
+ * <br> 30° saccade: duration 100ms, peak velocity 500-600°/s
+ * <br>50-60° saccade:, duration 120...ms, peak velocity 600-700 deg/sec
+ * <br>
+ * PEAK_VELOCITY_MAX = 1000 °/s
+ *
+ * <p/>
+ * <br><a href="http://www.cis.rit.edu/pelz/lab/papers/malinov_epelboim_et_al_saccades_vergence_look-tap.pdf">
+ * Characteristics of saccades</a>
+ * <br><a href="https://www.liverpool.ac.uk/~pcknox/teaching/Eymovs/params.htm">The parameters of eye movement</a>
+ * <br><a href = "https://www.researchgate.net/post/What_is_the_average_duration_for_saccades_with_36_and_54_of_amplitude">
+ * average duration for saccades with 36º and 54º of amplitude</a>
+ * <br><a href="http://sysengr.engr.arizona.edu/publishedPapers/Glissades.pdf">Glissades</a>
+ * <br><a href="https://pdfs.semanticscholar.org/5671/f0472e1b27f7a30a11e9fc27499b9e46b6d4.pdf">
+ *     Saccadic eye movement parameters in normal subjects </a>
+
  * *********************************************************
  * *                  DEVICE CALIBRATION                   *
  * *********************************************************
  * <p/>
  * MILLIVOLTS TO DEGREES CONVERSION FACTOR (SENSITIVITY): 10-30 µV/° (typically 10-20 µV/°)
  * The eye is a single dipole oriented from the retina to the cornea.
- * Such corneoretinal potentials are are in the range of: 0.4 - 1.0 mV (millivolts)
+ * Such corneoretinal potentials are  in the range of: 0.4 - 1.0 mV (millivolts)
  * (Numbers can be slightly different from different autors:
  * http://www.bem.fi/book/28/28.htm and
  * https://books.google.es/books?id=uVGqDAAAQBAJ&pg=PA83&lpg=PA83&dq=corneoretinal+potentials++mV&source=bl&ots=9ceeZWKXdI&sig=Ukyg5oo0xaWSd7WgiSmlgbPUanI&hl=ru&sa=X&redir_esc=y#v=onepage&q=corneoretinal%20potentials%20%20mV&f=false)
- * <br>
+ *
+ * <p>
  * The calibration of the signal may be achieved by having the patient look consecutively at two different
  * fixation points located a known angle apart and recording the concomitant EOGs.
  * Typical achievable accuracy is ±2° , and maximum rotation is ±70°.
  * However, linearity becomes progressively worse for angles beyond 30°.
- * <br>
+ *
+ * <p>
  * Typical signal magnitudes range from 5-20 µV/°
  * (1° of eye movement evokes an average potential of 5–20 microvolts).
- * Ather autor gives range 10-30 µV/° (see https://www.mdpi.com/1424-8220/17/7/1505/pdf)
- * <p>
+ * Another author gives range 10-30 µV/° (see https://www.mdpi.com/1424-8220/17/7/1505/pdf)
+ *
  * <p/>
  * The calibration data obtained with our device:
  * eyes movement from max right to max left gives potential change:
@@ -158,39 +146,39 @@ import java.text.SimpleDateFormat;
  * (when electrodes located in the corners of the eyes)
  * 2) about +300 to -300 µV
  * (when electrodes located on the forehead above the eyes)
- * <br><br>
+ * <p>
  * Maximum eye rotation is  ±70°.
  * For horizontal eye movements within the range of ±30 degrees,
  * the potential measured is assumed to be linear to the actual movement of the eye in the orbit.
  * But linearity becomes progressively worse for angles beyond 30°.
  * So max nonlinear ±70° eye rotation could be approximated by linear ±40(50)° rotation
  * And it gives us our signal magnitudes about  10 µV/° (microvolts per degree)
- * SENSITIVITY = 15 - 7 µV/°
- * SENSITIVITY_MAX = => 15µV/°
- * <p/>
+ * <br>SENSITIVITY = 15 - 7 µV/°
+ * <br>SENSITIVITY_MAX = => 15µV/°
  * <p>
  * * *******************************************************
  * *                  DETECTOR ALGORITHM                   *
  * *********************************************************
  * <p>
  * Simplest methods to detect saccade is a Velocity-Threshold Algorithm.
- * The eogDerivative profiles of  eye movements show essentially two distributions of velocities:
+ * The velocity profiles of  eye movements show essentially two distributions of velocities:
  * low velocities for smooth pursuit(slower tracking) movements, glissades and fixations (i.e., < 50 deg/sec),
  * and high velocities (i.e., >100 deg/sec) for saccades.
  * <p>
- * Matlab program marks saccades by a eogDerivative threshold of 75°/s.
- * Sometimes acceleration is used instead of eogDerivative - Acceleration-Threshold Algorithm or its combination.
- * The EyeLink software in its cognitive configuration uses eogDerivative, acceleration, and motion
+ * Matlab program marks saccades by a velocity threshold of 75°/s.
+ * Sometimes acceleration is used instead of velocity - Acceleration-Threshold Algorithm or its combination.
+ * The EyeLink software in its cognitive configuration uses velocity, acceleration, and motion
  * thresholds of 30º/sec, 8,000º/sec2, and 0.15º, respectively
  * <p>
  * <p/>
  * We use a variant of improved Velocity-Threshold Algorithm with ADAPTIVE threshold that is calculated from
- * the signal data itself during some period (noise). Based on these works:
- * <br>1) <a href="https://link.springer.com/content/pdf/10.3758/BRM.42.1.188.pdf">
+ * the signal data itself during some period. Based on these works:
+ * <br>1) <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.2459&rep=rep1&type=pdf">
+ *     Identifying Fixations and Saccades in Eye-Tracking Protocols</a>
+ * <br>2) <a href="https://link.springer.com/content/pdf/10.3758/BRM.42.1.188.pdf">
  * An adaptive algorithm for fixation, saccade, and glissade detection in eyetracking data</a>
- * <br>2) <a href="https://link.springer.com/content/pdf/10.3758/BRM.42.3.701.pdf">
+ * <br>3) <a href="https://link.springer.com/content/pdf/10.3758/BRM.42.3.701.pdf">
  * An improved algorithm for automatic detection of saccades in eye movement data and for calculating saccade parameters</a>
- * <p>
  * <p>
  * <p/>
  * For simplicity we calculate the threshold not on the base of signal standard deviation SD
@@ -200,10 +188,7 @@ import java.text.SimpleDateFormat;
  * of the square of its Fourier transform. So from a physical point of view, it is rather adequate to work
  * with squares values (energy)
  * <p/>
- * Also instead of instantaneous eogDerivative we use the averaged one (40-60ms) .
- * That reduces random noise and emphasize saccades
  */
-
 public class SacadeDetector {
     public static final int SACCADE_DURATION_MIN_MS = 40; // [ms] (milliseconds)
     public static final int SACCADE_DURATION_MAX_MS = 800;
@@ -215,7 +200,7 @@ public class SacadeDetector {
     public static final int SENSITIVITY_MAX = 15; // [µV/degree]
 
 
-    private static final int DEFAULT_DISABLED_INITIAL_INTERVAL_MS = 10 * 1000; // no detection
+    private static final int DEFAULT_DISABLED_INITIAL_INTERVAL_MS = 10 * 1000; // no saccade detection
 
     private int disabledPoints;
     private int disablingIndex;
@@ -226,7 +211,7 @@ public class SacadeDetector {
 
     private DataSeries eogDerivative;
     // if < 0 then data interval (1 point step) will be used
-    private int derivativeStepSizeMs = -1;
+    private int derivativeStepSizeMs = -1; // to reduces random noise and emphasize saccades especially visually 40-120ms good choice
 
 
     // during disconnections signal is a constant and its derivative == 0
